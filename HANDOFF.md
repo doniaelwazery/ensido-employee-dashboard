@@ -118,6 +118,8 @@ animation is off and final values show immediately. The tilt card and cursor eff
 
 ## 7. Deploys
 
-`npm run deploy` builds `dist/`, links it to the Vercel project `ensido-employee-dashboard`, deploys to production
-and deletes any `.env.local` so no token is ever published. Use `npm run deploy -- --preview` for a throw-away
+`npm run deploy` builds `dist/`, copies it to a temp folder **outside git**, links that folder to the Vercel project
+`ensido-employee-dashboard`, deploys to production and deletes the temp folder (including any pulled `.env.local`).
+Deploying from outside git matters: from inside the repo the Vercel CLI attaches the last commit's author, and Vercel
+**blocks** the deploy if that email isn't a member of the ensido team (status "Blocked", CLI appears to hang). Use `npm run deploy -- --preview` for a throw-away
 preview URL. The live link is public; ask the design owner before sharing further.
