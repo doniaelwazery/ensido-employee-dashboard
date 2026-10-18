@@ -54,8 +54,7 @@ export function Hero({ summary, tiles, history, loading, jump }: { summary: stri
         <circle cx="210" cy="210" r="150" stroke="var(--color-primary-dark)" strokeWidth="2" opacity="0.45" />
         <circle cx="210" cy="210" r="100" stroke="var(--color-primary)" strokeWidth="2" opacity="0.35" />
         <circle cx="210" cy="210" r="50" stroke="var(--color-primary)" strokeWidth="2" opacity="0.25" />
-        <circle className="hero-ripple" cx="210" cy="210" r="50" stroke="var(--color-primary-light)" strokeWidth="1.5" />
-        <circle className="hero-ripple" cx="210" cy="210" r="50" stroke="var(--color-primary-light)" strokeWidth="1.5" style={{ animationDelay: '3s' }} />
+        <circle className="hero-ripple" cx="210" cy="210" r="50" stroke="var(--color-primary-light)" strokeWidth="1" />
       </svg>
       <div className="relative flex min-w-0 flex-1 flex-col gap-5">
         <div className="flex flex-col gap-1.5">
