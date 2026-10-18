@@ -1,0 +1,243 @@
+@import "tailwindcss";
+
+/* Ensido design tokens (from the Figma variables).
+   Use them as Tailwind utilities (bg-primary, text-2xs, rounded-tile, shadow-raised…) or as CSS variables
+   (var(--color-primary)) in inline styles, SVG attributes and custom CSS. `static` keeps every token emitted
+   even when only referenced from TS strings. Spacing uses Tailwind's 4px scale (p-4 = 16px, w-55.5 = 222px). */
+@theme static {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+
+  /* ---- Type scale additions (Tailwind's xs…2xl stay as-is). Size only: pair with a leading-* class,
+     the same as the Figma text styles (e.g. text-2xs leading-3.5 = 11/14). ---- */
+  --text-4xs: 9px;
+  --text-3xs: 10px;
+  --text-2xs: 11px;
+  --text-xs-plus: 13px;
+  --text-display-sm: 22px;
+  --text-display: 26px;
+  --text-display-lg: 32px;
+
+  /* ---- Radii (Tailwind's sm/md/lg/xl/2xl stay as-is) ---- */
+  --radius-swatch: 3px;
+  --radius-tile: 10px;
+  --radius-panel: 14px;
+
+
+  /* ---- Colours ---- */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-primary: #5d5dda;
+  --color-primary-dark: #383893;
+  --color-primary-light: #b5b5f0;
+  --color-primary-lighter: #e7e7fb;
+  --color-grey-150: #f5f5f5;
+  --color-success-dark: #038c7e;
+  --color-info-dark: #1d4ed8;
+  --color-danger-dark: #9b0025;
+  --color-danger-surface: #fffafa; /* urgent card / overdue row fill */
+  --color-ai-accent: #ff2c2c; /* ensidoMate button border */
+  --color-secondary: #010a33;
+  --color-side-menu: #010a33;
+  --color-body-bg: #f6f6f6;
+  --color-card: #ffffff;
+  --color-row-hover: #f8f8ff;
+  --color-purple: #9747ff;
+  --color-purple-bg: #f2edfb;
+  --color-purple-stroke: #dfc7ff;
+  --color-heading: #171717;
+  --color-body-text: #404040;
+  --color-light-text: #737373;
+  --color-placeholder: #d4d4d4;
+  --color-border: #d4d4d4;
+  --color-border-darker: #a3a3a3;
+  --color-grey-light: #fafafa;
+  --color-grey-100: #f6f6f6;
+  --color-grey-200: #e4e3e8;
+
+  --color-success: #00b2a1;
+  --color-success-bg: #e1f3f1;
+  --color-success-stroke: #a8e6c5;
+  --color-info: #2563eb;
+  --color-info-light: #3b82f6;
+  --color-info-lighter: #8bc2ff;
+  --color-info-bg: #eff6ff;
+  --color-info-stroke: #bad4fd;
+  --color-warning: #ffa71f; /* Warning Medium */
+  --color-warning-bg: #fffbeb;
+  --color-warning-stroke: #fcdfa8;
+  --color-danger: #ed1d4e;
+  --color-danger-light: #ff8b82;
+  --color-danger-stroke: #fabebe;
+  --color-danger-bg: #fef2f2; /* Danger BG */
+  --color-purple-light: #e9d8ff; /* Purple Light */
+
+  --shadow-card: 0 1px 1.5px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.1);
+  --shadow-tooltip: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-primary: 0 6px 14px -6px var(--color-primary);
+  --shadow-primary-lg: 0 8px 18px -8px var(--color-primary);
+  --shadow-focus-ring: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  --shadow-focus-card: 0 0 0 4px color-mix(in srgb, var(--color-primary) 7%, transparent), 0 12px 28px -14px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  --shadow-ai-glow: 12px -10.4px 85.6px 0 rgba(255, 0, 0, 0.28), -11.2px 13.2px 64px 0 rgba(143, 0, 255, 0.23);
+}
+
+@layer base {
+  body {
+    @apply bg-body-bg font-sans text-body-text antialiased;
+  }
+}
+
+/* Thin "Classic" scrollbar used in the KPIs overview card (grey-200 track, grey-500 thumb) */
+@layer components {
+  .classic-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-light-text) var(--color-grey-200);
+  }
+  .classic-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+  .classic-scroll::-webkit-scrollbar-track {
+    background: var(--color-grey-200);
+    border-radius: 8px;
+  }
+  .classic-scroll::-webkit-scrollbar-thumb {
+    background: var(--color-light-text);
+    border-radius: 100px;
+    border: 1px solid var(--color-grey-200);
+  }
+}
+
+/* Popover menus */
+@keyframes menu-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.menu-in {
+  animation: menu-in 140ms ease-out both;
+}
+
+/* Page enter */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.page-in {
+  animation: page-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-in { animation: none; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Employee dashboard chart motion */
+/* Bar fill: grows from 0 to the inline width once in view (src/motion.ts sets data-inview).
+   Fill mode `backwards` releases the bar after the run, so later value changes ease via the transition. */
+@keyframes fill-x { from { width: 0; } }
+.fill-x { animation: fill-x 1s cubic-bezier(0.2, 0.8, 0.2, 1) backwards paused; transition: width 600ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.fill-x[data-inview] { animation-play-state: running; }
+@keyframes draw-line { from { stroke-dashoffset: 1; } }
+@keyframes dash-ring { from { stroke-dasharray: 0 999; } }
+.dash-ring { animation: dash-ring 1.1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s both paused; }
+.dash-ring[data-inview] { animation-play-state: running; }
+/* Score history build-up: line draws, dots pop (with a ripple) as the line reaches them, then the area rises.
+   Everything inside .reveal waits until src/motion.ts marks it data-inview. */
+.hist-line { stroke-dasharray: 1; animation: draw-line linear backwards; }
+.hist-dot { transform-box: fill-box; transform-origin: center; animation: hist-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards; transition: r 200ms ease; }
+@keyframes hist-pop { from { transform: scale(0); opacity: 0; } }
+.hist-ripple { transform-box: fill-box; transform-origin: center; opacity: 0; animation: hist-ripple 900ms ease-out backwards; }
+@keyframes hist-ripple { 0% { transform: scale(1); opacity: 0; } 8% { opacity: 0.6; } 100% { transform: scale(3.2); opacity: 0; } }
+.hist-area { transform-box: fill-box; transform-origin: bottom; animation: hist-area 700ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+@keyframes hist-area { from { transform: scaleY(0); opacity: 0; } }
+/* Competency radar: dots and labels are static; the outline traces through them, then the fill fades in. */
+@keyframes rd-draw { from { stroke-dasharray: 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1; stroke-dashoffset: 0; } }
+.rd-trace { animation: rd-draw 1200ms cubic-bezier(0.4, 0, 0.2, 1) backwards; }
+.rd-fill { animation: rd-fill 600ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+@keyframes rd-fill { from { opacity: 0; } }
+
+/* .rv children inside a .reveal container wait until src/motion.ts marks the container data-inview */
+.reveal :is(.hist-line, .hist-dot, .hist-ripple, .hist-area, .rv) { animation-play-state: paused; }
+.reveal[data-inview] :is(.hist-line, .hist-dot, .hist-ripple, .hist-area, .rv) { animation-play-state: running; }
+@media (prefers-reduced-motion: reduce) { .hist-line, .hist-dot, .hist-ripple, .hist-area, .rv { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .fill-x, .dash-ring { animation: none; }
+}
+/* Dashboard hero: cursor spotlight + dot-grid reveal, border glow on tiles, aurora drift, ring ripples, parallax, entrance */
+.hero-spot, .hero-grid, .hero-aurora { position: absolute; pointer-events: none; }
+.hero-spot {
+  inset: 0; opacity: 0; transition: opacity 500ms ease;
+  background: radial-gradient(520px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--color-primary) 40%, transparent), transparent 60%);
+}
+.hero-grid {
+  inset: 0; opacity: 0; transition: opacity 500ms ease;
+  background-image: radial-gradient(color-mix(in srgb, var(--color-white) 28%, transparent) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), #000, transparent 70%);
+  mask-image: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), #000, transparent 70%);
+}
+.hero[data-lit] .hero-spot, .hero[data-lit] .hero-grid { opacity: 1; }
+.hero-aurora {
+  left: -10%; top: 20%; width: 520px; height: 320px; border-radius: 9999px; filter: blur(60px);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--color-primary) 35%, transparent), transparent);
+  animation: aurora 16s ease-in-out infinite alternate;
+}
+@keyframes aurora {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40%, -25%) scale(1.15); }
+  100% { transform: translate(85%, 15%) scale(0.95); }
+}
+.hero-deco { transform: translate(calc(var(--px, 0) * -30px), calc(var(--py, 0) * -30px)); transition: transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.hero-ripple { transform-box: fill-box; transform-origin: center; opacity: 0; animation: ripple 6s cubic-bezier(0.2, 0.6, 0.3, 1) infinite; }
+@keyframes ripple { 0% { transform: scale(1); opacity: 0.55; } 100% { transform: scale(4.2); opacity: 0; } }
+.glow-tile::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none; opacity: 0; transition: opacity 400ms ease;
+  background: radial-gradient(160px circle at var(--x, 50%) var(--y, 50%), color-mix(in srgb, var(--color-primary-light) 95%, transparent), transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.glow-tile::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 400ms ease;
+  background: radial-gradient(220px circle at var(--x, 50%) var(--y, 50%), color-mix(in srgb, var(--color-primary-light) 10%, transparent), transparent 70%);
+}
+.hero[data-lit] .glow-tile::before, .hero[data-lit] .glow-tile::after { opacity: 1; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+.rise { animation: rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-aurora, .hero-ripple, .rise { animation: none; }
+  .hero-deco { transform: none; }
+}
+
+/* Empty states (New Employee): icons float gently and send out a soft halo; the hero's waiting ring turns slowly */
+.empty-icon { position: relative; animation: empty-float 4s ease-in-out infinite; }
+.empty-icon::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 9999px; border: 1.5px solid currentColor; pointer-events: none;
+  opacity: 0; animation: empty-halo 3.2s ease-out infinite;
+}
+@keyframes empty-float { 50% { transform: translateY(-3px); } }
+@keyframes empty-halo { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.7); opacity: 0; } }
+.empty-spin { animation: spin 14s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .empty-icon, .empty-icon::after, .empty-spin { animation: none; } }
+
+/* Tilt card (dashboard Latest Result): pointer-driven 3D tilt, lift, glare and parallax layers */
+.tilt {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1);
+  transform-style: preserve-3d;
+  transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 600ms ease, border-color 300ms ease, background-color 300ms ease;
+}
+.tilt[data-active] {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(1.04);
+  transition: transform 120ms ease-out, box-shadow 300ms ease, border-color 300ms ease, background-color 300ms ease;
+  border-color: color-mix(in srgb, var(--color-primary-light) 55%, transparent);
+  background-color: color-mix(in srgb, var(--color-white) 10%, transparent);
+  box-shadow: 0 28px 50px -18px color-mix(in srgb, var(--color-black) 70%, transparent), 0 0 40px -10px color-mix(in srgb, var(--color-primary) 55%, transparent);
+}
+.tilt-glare {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 400ms ease;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 0%), color-mix(in srgb, var(--color-white) 20%, transparent), transparent 55%);
+}
+.tilt[data-active] .tilt-glare { opacity: 1; }
+.tilt-pop, .tilt-pop-sm { transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.tilt[data-active] .tilt-pop { transform: translateZ(45px); }
+.tilt[data-active] .tilt-pop-sm { transform: translateZ(25px); }
+@media (prefers-reduced-motion: reduce) { .tilt, .tilt[data-active], .tilt-pop, .tilt-pop-sm { transform: none !important; } }
+
