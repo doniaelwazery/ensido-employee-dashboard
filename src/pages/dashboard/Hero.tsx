@@ -11,7 +11,7 @@ export function Hero({ summary, tiles, history, loading, jump }: { summary: stri
   const cat = latest ? category(latest.v) : null
   const ringColor = cat?.key === 'exceeds' ? 'var(--color-primary-light)' : cat?.color
 
-  /* cursor light: section-relative --mx/--my, normalised --px/--py for parallax, tile-relative --x/--y for border glow */
+  /* cursor light: section-relative --mx/--my for the spotlight, tile-relative --x/--y for border glow */
   const ref = useRef<HTMLElement>(null)
   const frame = useRef(0)
   const move = (e: ReactPointerEvent<HTMLElement>) => {
@@ -24,8 +24,6 @@ export function Hero({ summary, tiles, history, loading, jump }: { summary: stri
       const r = el.getBoundingClientRect()
       el.style.setProperty('--mx', `${x - r.left}px`)
       el.style.setProperty('--my', `${y - r.top}px`)
-      el.style.setProperty('--px', ((x - r.left) / r.width - 0.5).toFixed(3))
-      el.style.setProperty('--py', ((y - r.top) / r.height - 0.5).toFixed(3))
       el.querySelectorAll<HTMLElement>('.glow-tile').forEach((t) => {
         const b = t.getBoundingClientRect()
         t.style.setProperty('--x', `${x - b.left}px`)
@@ -39,8 +37,6 @@ export function Hero({ summary, tiles, history, loading, jump }: { summary: stri
     const el = ref.current
     if (!el) return
     delete el.dataset.lit
-    el.style.setProperty('--px', '0')
-    el.style.setProperty('--py', '0')
   }
   useEffect(() => () => cancelAnimationFrame(frame.current), [])
 
@@ -49,12 +45,11 @@ export function Hero({ summary, tiles, history, loading, jump }: { summary: stri
       <span aria-hidden="true" className="hero-aurora" />
       <span aria-hidden="true" className="hero-spot" />
       <span aria-hidden="true" className="hero-grid" />
-      <svg aria-hidden="true" width="420" height="420" viewBox="0 0 420 420" fill="none" className="hero-deco pointer-events-none absolute -top-37.5 -right-27.5">
-        <circle cx="210" cy="210" r="200" stroke="var(--color-primary-dark)" strokeWidth="2" opacity="0.6" />
-        <circle cx="210" cy="210" r="150" stroke="var(--color-primary-dark)" strokeWidth="2" opacity="0.45" />
-        <circle cx="210" cy="210" r="100" stroke="var(--color-primary)" strokeWidth="2" opacity="0.35" />
-        <circle cx="210" cy="210" r="50" stroke="var(--color-primary)" strokeWidth="2" opacity="0.25" />
-        <circle className="hero-ripple" cx="210" cy="210" r="50" stroke="var(--color-primary-light)" strokeWidth="1" />
+      <svg aria-hidden="true" width="420" height="420" viewBox="0 0 420 420" fill="none" className="pointer-events-none absolute -top-37.5 -right-27.5">
+        <circle cx="210" cy="210" r="200" stroke="var(--color-primary-dark)" strokeWidth="2" opacity="0.25" />
+        <circle cx="210" cy="210" r="150" stroke="var(--color-primary-dark)" strokeWidth="2" opacity="0.18" />
+        <circle cx="210" cy="210" r="100" stroke="var(--color-primary)" strokeWidth="2" opacity="0.14" />
+        <circle cx="210" cy="210" r="50" stroke="var(--color-primary)" strokeWidth="2" opacity="0.1" />
       </svg>
       <div className="relative flex min-w-0 flex-1 flex-col gap-5">
         <div className="flex flex-col gap-1.5">
@@ -125,7 +120,7 @@ export function CountUp({ value, duration = 900 }: { value: number; duration?: n
     let raf = 0
     const start = performance.now()
     const tick = (now: number) => {
-      const p = Math.min(1, (now - start) / duration)
+      const p = Math.min(1, Math.max(0, (now - start) / duration)) // rAF time can precede `start`
       setN(Math.round(value * (1 - Math.pow(1 - p, 3))))
       if (p < 1) raf = requestAnimationFrame(tick)
     }
