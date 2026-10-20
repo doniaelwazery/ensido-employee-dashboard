@@ -13,7 +13,7 @@ export function ManagersCard({ managers, loading }: { managers: (typeof DASHBOAR
         <div className="flex items-center gap-3"><span className="size-10 animate-pulse rounded-full bg-grey-150" /><span className="flex flex-1 flex-col gap-2"><Skel className="h-3 w-1/2" /><Skel className="h-2.5 w-1/3" /></span></div>
       ) : (
         <div className="flex flex-col gap-2.5">
-          <p className="text-xs leading-4 text-light-text">{managers.length > 1 ? `Reports to ${managers.length} managers` : 'Reports to'}</p>
+          <p className="text-xs leading-4 text-light-text">{managers.length > 0 ? `Reports to (${managers.length} ${managers.length > 1 ? 'Managers' : 'Manager'})` : 'Reports to'}</p>
           {managers.length === 0 ? (
             <div className="flex items-center gap-3 rounded-lg border border-info-stroke bg-info-bg p-3 text-sm leading-5 text-info-dark">
               <Icon name="info" size={18} color="var(--color-info)" />
