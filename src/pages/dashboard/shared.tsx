@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { type GoalStatus, type NoteType } from '../../data/dashboard'
+import { type DashGoal, type GoalStatus, type GoalSub, type NoteType } from '../../data/dashboard'
 
 export type Tone = { bg: string; stroke: string; fg: string; dot: string }
 export const TONE: Record<'danger' | 'purple' | 'info' | 'neutral' | 'success', Tone> = {
@@ -10,14 +10,22 @@ export const TONE: Record<'danger' | 'purple' | 'info' | 'neutral' | 'success', 
   success: { bg: 'var(--color-success-bg)', stroke: 'var(--color-success-stroke)', fg: 'var(--color-success-dark)', dot: 'var(--color-success)' },
 }
 
-export const GOAL: Record<GoalStatus, { label: string; tone: keyof typeof TONE; bar: string; rank: number; flag?: boolean }> = {
-  overdue: { label: 'Overdue', tone: 'danger', bar: 'var(--color-danger)', rank: 0, flag: true },
-  rejected: { label: 'Rejected', tone: 'danger', bar: 'var(--color-danger)', rank: 1, flag: true },
-  pending: { label: 'Pending Approval', tone: 'purple', bar: 'var(--color-primary)', rank: 2 },
-  in_progress: { label: 'In Progress', tone: 'info', bar: 'var(--color-primary)', rank: 3 },
-  not_started: { label: 'Not Started', tone: 'neutral', bar: 'var(--color-border-darker)', rank: 4 },
-  completed: { label: 'Completed', tone: 'success', bar: 'var(--color-success)', rank: 5 },
+/** Main goal status: drives the pill tone (badge colors from Figma 25834:86493). */
+export const GOAL: Record<GoalStatus, { label: string; tone: Tone; bar: string; rank: number }> = {
+  in_progress: { label: 'In Progress', tone: { bg: 'var(--color-info-bg)', stroke: 'var(--color-info-lighter)', fg: 'var(--color-info)', dot: 'var(--color-info)' }, bar: 'var(--color-primary)', rank: 0 },
+  not_started: { label: 'Not Started', tone: { bg: 'var(--color-grey-100)', stroke: 'var(--color-border-darker)', fg: 'var(--color-body-text)', dot: 'var(--color-body-text)' }, bar: 'var(--color-border-darker)', rank: 1 },
+  completed: { label: 'Completed', tone: { bg: 'var(--color-success-bg)', stroke: 'var(--color-success-stroke)', fg: 'var(--color-success)', dot: 'var(--color-success)' }, bar: 'var(--color-success)', rank: 2 },
 }
+/** Sub status: appended to the main label in its own color ("Not Started - Rejected"). */
+export const GOAL_SUB: Record<GoalSub, { label: string; fg: string; rank: number; flag?: boolean }> = {
+  overdue: { label: 'Overdue', fg: 'var(--color-danger)', rank: 0, flag: true },
+  rejected: { label: 'Rejected', fg: 'var(--color-danger)', rank: 1, flag: true },
+  pending: { label: 'Pending Approval', fg: '#d97706', rank: 2 },
+}
+export const goalFlag = (g: DashGoal) => !!(g.sub && GOAL_SUB[g.sub].flag)
+/** Most urgent first: overdue, rejected, pending approval, then by main status. */
+export const goalRank = (g: DashGoal) => (g.sub ? GOAL_SUB[g.sub].rank : 3) * 10 + GOAL[g.status].rank
+export const goalLabel = (g: DashGoal) => GOAL[g.status].label + (g.sub ? ` - ${GOAL_SUB[g.sub].label}` : '')
 
 /* ---------- icons ---------- */
 

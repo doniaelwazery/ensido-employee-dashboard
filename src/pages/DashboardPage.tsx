@@ -10,7 +10,7 @@ import { HistoryCard } from './dashboard/HistoryCard'
 import { NotificationsCard } from './dashboard/NotificationsCard'
 import { ManagersCard, PoliciesCard } from './dashboard/PeopleCards'
 import { Controls } from './dashboard/PrototypeControls'
-import { Card, Chip, Empty, GOAL, Icon, Skel, TextLink } from './dashboard/shared'
+import { Card, Chip, Empty, Icon, Skel, TextLink, goalFlag, goalRank } from './dashboard/shared'
 
 // Employee dashboard — the original "Ensido Dashboards" Claude canvas look inside the ensido shell
 // (Figma: Dashboard Research › "Employee Dashboard — Ensido Style", Typical 29211:17626 / New Employee 29220:21367).
@@ -69,8 +69,8 @@ function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOA
   const locallyRead = unreadIds.filter((id) => read[id]).length
   const totalUnread = notesFail ? 0 : Math.max(0, (d.unreadTotal ?? unreadIds.length) - locallyRead)
 
-  const goals = useMemo(() => [...d.goals].sort((a, b) => GOAL[a.status].rank - GOAL[b.status].rank), [d.goals])
-  const attention = goals.filter((g) => GOAL[g.status].flag).length
+  const goals = useMemo(() => [...d.goals].sort((a, b) => goalRank(a) - goalRank(b)), [d.goals])
+  const attention = goals.filter(goalFlag).length
   const history = d.history.map((v, i) => ({ v, q: HISTORY_META[i][0], range: HISTORY_META[i][1], published: HISTORY_META[i][2].replace(',', '') }))
 
   const tiles = [

@@ -4,8 +4,11 @@
 export type Scenario = 'typical' | 'new' | 'busy'
 
 export type DashRound = { title: string; covered: string; deadline: string; days: number; forms: number; submitted: number }
-export type GoalStatus = 'overdue' | 'rejected' | 'pending' | 'in_progress' | 'not_started' | 'completed'
-export type DashGoal = { title: string; status: GoalStatus; done: number; total: number; updated: string | null }
+// Main status + optional sub status (Figma 25834:86493, My Goals table):
+// Not Started → Pending Approval | Rejected · In Progress → Overdue · Completed → Pending Approval | Rejected
+export type GoalStatus = 'not_started' | 'in_progress' | 'completed'
+export type GoalSub = 'pending' | 'rejected' | 'overdue'
+export type DashGoal = { title: string; status: GoalStatus; sub?: GoalSub; done: number; total: number; updated: string | null }
 export type NoteType = 'eval' | 'goal' | 'people' | 'award' | 'policy'
 export type DashNote = { id: string; type: NoteType; urgent?: boolean; read?: boolean; title: string; body: string; when: string; children?: { id: string; title: string; when: string }[] }
 export type DashManager = { initials: string; name: string; job: string; relation: string; unit: string }
@@ -56,12 +59,12 @@ export const DASHBOARD: Record<Scenario, DashData> = {
     ],
     notesTotal: 4,
     goals: [
-      { title: 'Complete AWS Solutions Architect certification', status: 'overdue', done: 1, total: 3, updated: '14 Sep, 2026' },
-      { title: 'Document the mobile release process', status: 'rejected', done: 0, total: 3, updated: '28 Sep, 2026' },
-      { title: 'Mentor two junior engineers', status: 'pending', done: 0, total: 2, updated: null },
+      { title: 'Complete AWS Solutions Architect certification', status: 'in_progress', sub: 'overdue', done: 1, total: 3, updated: '14 Sep, 2026' },
+      { title: 'Document the mobile release process', status: 'not_started', sub: 'rejected', done: 0, total: 3, updated: '28 Sep, 2026' },
+      { title: 'Mentor two junior engineers', status: 'not_started', sub: 'pending', done: 0, total: 2, updated: null },
+      { title: 'Ship the onboarding redesign', status: 'completed', sub: 'pending', done: 4, total: 4, updated: '2 Oct, 2026' },
       { title: 'Reduce API p95 latency to under 300 ms', status: 'in_progress', done: 3, total: 5, updated: '8 Oct, 2026' },
       { title: 'Migrate CI pipelines to GitHub Actions', status: 'not_started', done: 0, total: 4, updated: null },
-      { title: 'Ship the onboarding redesign', status: 'in_progress', done: 3, total: 4, updated: '2 Oct, 2026' },
     ],
     managers: [{ initials: 'AF', name: 'Ahmed Fathy', job: 'Engineering Manager', relation: 'Direct Manager', unit: 'Mobile Team' }],
     groups: [
@@ -107,18 +110,18 @@ export const DASHBOARD: Record<Scenario, DashData> = {
     notesTotal: 23,
     unreadTotal: 14,
     goals: [
-      { title: 'Complete AWS Solutions Architect certification', status: 'overdue', done: 1, total: 3, updated: '14 Sep, 2026' },
-      { title: 'Publish the offline mode RFC', status: 'overdue', done: 1, total: 2, updated: '30 Sep, 2026' },
-      { title: 'Refactor the payments SDK', status: 'overdue', done: 2, total: 6, updated: '22 Sep, 2026' },
-      { title: 'Document the mobile release process', status: 'rejected', done: 0, total: 3, updated: '28 Sep, 2026' },
-      { title: 'Run a brown-bag session series', status: 'rejected', done: 0, total: 4, updated: '11 Oct, 2026' },
-      { title: 'Mentor two junior engineers', status: 'pending', done: 0, total: 2, updated: null },
+      { title: 'Complete AWS Solutions Architect certification', status: 'in_progress', sub: 'overdue', done: 1, total: 3, updated: '14 Sep, 2026' },
+      { title: 'Publish the offline mode RFC', status: 'in_progress', sub: 'overdue', done: 1, total: 2, updated: '30 Sep, 2026' },
+      { title: 'Refactor the payments SDK', status: 'in_progress', sub: 'overdue', done: 2, total: 6, updated: '22 Sep, 2026' },
+      { title: 'Document the mobile release process', status: 'not_started', sub: 'rejected', done: 0, total: 3, updated: '28 Sep, 2026' },
+      { title: 'Run a brown-bag session series', status: 'completed', sub: 'rejected', done: 3, total: 4, updated: '11 Oct, 2026' },
+      { title: 'Mentor two junior engineers', status: 'not_started', sub: 'pending', done: 0, total: 2, updated: null },
+      { title: 'Ship the onboarding redesign', status: 'completed', sub: 'pending', done: 4, total: 4, updated: '12 Oct, 2026' },
       { title: 'Reduce API p95 latency to under 300 ms', status: 'in_progress', done: 3, total: 5, updated: '8 Oct, 2026' },
       { title: 'Improve crash-free sessions to 99.8%', status: 'in_progress', done: 2, total: 4, updated: '6 Oct, 2026' },
       { title: 'Add accessibility labels across the app', status: 'in_progress', done: 5, total: 8, updated: '10 Oct, 2026' },
       { title: 'Lead the Q4 hiring loop', status: 'in_progress', done: 1, total: 3, updated: '9 Oct, 2026' },
       { title: 'Migrate CI pipelines to GitHub Actions', status: 'not_started', done: 0, total: 4, updated: null },
-      { title: 'Ship the onboarding redesign', status: 'completed', done: 4, total: 4, updated: '2 Oct, 2026' },
       { title: 'Upgrade to React Native 0.76', status: 'completed', done: 3, total: 3, updated: '19 Sep, 2026' },
       { title: 'Set up the feature flag service', status: 'completed', done: 2, total: 2, updated: '3 Sep, 2026' },
     ],

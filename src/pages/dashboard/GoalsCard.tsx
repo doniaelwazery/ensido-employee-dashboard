@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { type DashGoal } from '../../data/dashboard'
-import { Card, Dot, Empty, GOAL, Icon, Pill, Ring, Skel, TONE, TextLink } from './shared'
+import { Card, Dot, Empty, GOAL, GOAL_SUB, Icon, Pill, Ring, Skel, TextLink, goalFlag, goalLabel } from './shared'
 
 /* ---------- Goals ---------- */
 
 export type GoalFilter = 'all' | 'attention' | 'in_progress' | 'completed'
 export const FILTERS: { id: GoalFilter; label: string; dot: string; test: (g: DashGoal) => boolean; empty: [string, string] }[] = [
   { id: 'all', label: 'All', dot: 'var(--color-primary)', test: () => true, empty: ['No Goals', ''] },
-  { id: 'attention', label: 'Needs Attention', dot: 'var(--color-danger)', test: (g) => !!GOAL[g.status].flag, empty: ['Nothing Needs Attention', 'No overdue or rejected goals. Everything is on track.'] },
+  { id: 'attention', label: 'Needs Attention', dot: 'var(--color-danger)', test: goalFlag, empty: ['Nothing Needs Attention', 'No overdue or rejected goals. Everything is on track.'] },
   { id: 'in_progress', label: 'In Progress', dot: 'var(--color-info)', test: (g) => g.status === 'in_progress', empty: ['No Goals in Progress', 'Start a goal by logging progress on its first milestone.'] },
   { id: 'completed', label: 'Completed', dot: 'var(--color-success)', test: (g) => g.status === 'completed', empty: ['No Completed Goals Yet', 'Goals you finish will show here.'] },
 ]
@@ -83,16 +83,24 @@ export function GoalsCard({ goals, loading }: { goals: DashGoal[]; loading: bool
             ) : (
               list.slice(0, 4).map((g, i) => {
                 const m = GOAL[g.status]
+                const sub = g.sub && GOAL_SUB[g.sub]
+                const flag = goalFlag(g)
                 const pct = Math.round((g.done / g.total) * 100)
                 return (
-                  <a key={g.title} href="#" onClick={(e) => e.preventDefault()} className={`group menu-in flex items-center gap-3.5 rounded-xl border px-4 py-3 transition-colors hover:border-primary-light ${m.flag ? 'border-danger-stroke bg-danger-surface' : 'border-grey-200 bg-white'}`} style={{ animationDelay: `${i * 50}ms` }}>
-                    <Ring value={pct} size={44} stroke={4.9} color={m.bar} track="var(--color-grey-150)">
+                  <a key={g.title} href="#" onClick={(e) => e.preventDefault()} className={`group menu-in flex items-center gap-3.5 rounded-xl border px-4 py-3 transition-colors hover:border-primary-light ${flag ? 'border-danger-stroke bg-danger-surface' : 'border-grey-200 bg-white'}`} style={{ animationDelay: `${i * 50}ms` }}>
+                    <Ring value={pct} size={44} stroke={4.9} color={flag ? 'var(--color-danger)' : m.bar} track="var(--color-grey-150)">
                       <span className="text-3xs leading-3 font-bold text-heading">{pct}%</span>
                     </Ring>
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
                       <span className="truncate text-sm leading-5 font-semibold text-heading">{g.title}</span>
                       <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs leading-4 text-light-text">
-                        <Pill tone={TONE[m.tone]} dot>{m.label}</Pill>
+                        <Pill tone={m.tone} dot>
+                          <span className="sr-only">{goalLabel(g)}</span>
+                          <span aria-hidden="true">
+                            {m.label}
+                            {sub && <span style={{ color: sub.fg }}> - {sub.label}</span>}
+                          </span>
+                        </Pill>
                         <span>{g.done} of {g.total} milestones</span>
                         <span aria-hidden="true">·</span>
                         <span>{g.updated ? `Updated ${g.updated.replace(',', '')}` : 'No updates yet'}</span>
