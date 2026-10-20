@@ -4,10 +4,11 @@ import { Card, Dot, Empty, GOAL, GOAL_SUB, Icon, Pill, Ring, Skel, TextLink, goa
 
 /* ---------- Goals ---------- */
 
-export type GoalFilter = 'all' | 'attention' | 'in_progress' | 'completed'
+export type GoalFilter = 'all' | 'attention' | 'not_started' | 'in_progress' | 'completed'
 export const FILTERS: { id: GoalFilter; label: string; dot: string; test: (g: DashGoal) => boolean; empty: [string, string] }[] = [
   { id: 'all', label: 'All', dot: 'var(--color-primary)', test: () => true, empty: ['No Goals', ''] },
   { id: 'attention', label: 'Needs Attention', dot: 'var(--color-danger)', test: goalFlag, empty: ['Nothing Needs Attention', 'No overdue or rejected goals. Everything is on track.'] },
+  { id: 'not_started', label: 'Not Started', dot: 'var(--color-border-darker)', test: (g) => g.status === 'not_started', empty: ['No Goals Waiting to Start', 'Every goal has been started.'] },
   { id: 'in_progress', label: 'In Progress', dot: 'var(--color-info)', test: (g) => g.status === 'in_progress', empty: ['No Goals in Progress', 'Start a goal by logging progress on its first milestone.'] },
   { id: 'completed', label: 'Completed', dot: 'var(--color-success)', test: (g) => g.status === 'completed', empty: ['No Completed Goals Yet', 'Goals you finish will show here.'] },
 ]
@@ -53,13 +54,13 @@ export function GoalsCard({ goals, loading }: { goals: DashGoal[]; loading: bool
               <span className="text-xl leading-6 font-bold text-heading">{msPct}%</span>
               <span className="text-3xs leading-3 text-light-text">milestones</span>
             </Ring>
-            <div role="group" aria-label="Filter goals by status" className="grid min-w-0 flex-1 basis-80 grid-cols-2 gap-2.5 sm:grid-cols-4">
+            <div role="group" aria-label="Filter goals by status" className="grid min-w-0 flex-1 basis-80 grid-cols-2 gap-2.5 sm:grid-cols-5">
               {FILTERS.map((f) => {
                 const n = goals.filter(f.test).length
                 const on = f.id === filter
                 const zero = n === 0
                 return (
-                  <button key={f.id} type="button" aria-pressed={on} onClick={() => setFilter(f.id)} className={`flex cursor-pointer flex-col justify-between gap-1.5 rounded-xl border px-3.5 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary-light ${on ? 'border-primary bg-row-hover shadow-focus-ring' : zero ? 'border-dashed border-grey-200 bg-grey-light' : 'border-grey-200 bg-white'}`}>
+                  <button key={f.id} type="button" aria-pressed={on} onClick={() => setFilter(f.id)} className={`${f.id === 'all' ? 'col-span-2 sm:col-span-1 ' : ''}flex cursor-pointer flex-col justify-between gap-1.5 rounded-xl border px-3.5 py-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary-light ${on ? 'border-primary bg-row-hover shadow-focus-ring' : zero ? 'border-dashed border-grey-200 bg-grey-light' : 'border-grey-200 bg-white'}`}>
                     <span className={`flex items-start gap-1.5 text-xs leading-4 font-medium ${on ? 'text-primary-dark' : 'text-light-text'}`}>
                       <span className="mt-1 flex"><Dot color={f.dot} hollow={zero} /></span>
                       {f.label}
