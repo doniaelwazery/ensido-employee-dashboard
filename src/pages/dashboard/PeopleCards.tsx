@@ -6,11 +6,11 @@ import { Card, Chip, Icon, Skel, TONE, TextLink } from './shared'
 
 export function ManagersCard({ managers, loading }: { managers: (typeof DASHBOARD)['busy']['managers']; loading: boolean }) {
   const [more, setMore] = useState(false)
-  // Count and list cover direct managers only; the first 3 show, See All expands the rest
+  // Count and list cover direct managers only; the first 2 show, See All expands the rest
   const directs = managers.filter((m) => m.relation === 'Direct Manager')
   const direct = directs.length
   const shown = directs.length ? directs : managers
-  const list = more ? shown : shown.slice(0, 3)
+  const list = more ? shown : shown.slice(0, 2)
   return (
     <Card title="My Managers and Position" aside={<TextLink>View Hierarchy</TextLink>} busy={loading}>
       {loading ? (
@@ -35,7 +35,7 @@ export function ManagersCard({ managers, loading }: { managers: (typeof DASHBOAR
               </a>
             ))
           )}
-          {shown.length > 3 && <TextLink onClick={() => setMore(!more)}>{more ? 'Show Less' : 'See All'}</TextLink>}
+          {shown.length > 2 &&<TextLink onClick={() => setMore(!more)}>{more ? 'Show Less' : 'See All'}</TextLink>}
         </div>
       )}
       {!loading && (
