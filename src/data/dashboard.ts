@@ -43,6 +43,15 @@ const MANY_KPIS: [string, number][] = [
 ]
 export const MANY_KPI_LIST = MANY_KPIS
 
+// Managers use the heavy data in the default (typical) scenario too: 4 direct managers + a skip manager (not counted)
+const HEAVY_MANAGERS: DashManager[] = [
+  { initials: 'AF', name: 'Ahmed Fathy', job: 'Engineering Manager', relation: 'Direct Manager', unit: 'Mobile Team' },
+  { initials: 'DM', name: 'Dalia Mansour', job: 'Product Director', relation: 'Direct Manager', unit: 'Product' },
+  { initials: 'NH', name: 'Nour Hassan', job: 'Design Lead', relation: 'Direct Manager', unit: 'Design' },
+  { initials: 'KS', name: 'Karim Saleh', job: 'QA Manager', relation: 'Direct Manager', unit: 'Quality' },
+  { initials: 'HA', name: 'Hesham Adel', job: 'Chief Technology Officer', relation: 'Skip Manager', unit: 'Technology' },
+]
+
 export const DASHBOARD: Record<Scenario, DashData> = {
   typical: {
     summary: 'Two evaluation rounds are waiting on you, and the nearest deadline is in 2 days.',
@@ -66,7 +75,7 @@ export const DASHBOARD: Record<Scenario, DashData> = {
       { title: 'Reduce API p95 latency to under 300 ms', status: 'in_progress', done: 3, total: 5, updated: '8 Oct, 2026' },
       { title: 'Migrate CI pipelines to GitHub Actions', status: 'not_started', done: 0, total: 4, updated: null },
     ],
-    managers: [{ initials: 'AF', name: 'Ahmed Fathy', job: 'Engineering Manager', relation: 'Direct Manager', unit: 'Mobile Team' }],
+    managers: HEAVY_MANAGERS,
     groups: [
       { initials: 'MS', name: 'Mobile Squad', type: 'Work group', roles: ['Member'] },
       { initials: 'RC', name: 'Release Committee', type: 'Work group', roles: ['Lead', 'Reviewer'] },
@@ -125,11 +134,7 @@ export const DASHBOARD: Record<Scenario, DashData> = {
       { title: 'Upgrade to React Native 0.76', status: 'completed', done: 3, total: 3, updated: '19 Sep, 2026' },
       { title: 'Set up the feature flag service', status: 'completed', done: 2, total: 2, updated: '3 Sep, 2026' },
     ],
-    managers: [
-      { initials: 'AF', name: 'Ahmed Fathy', job: 'Engineering Manager', relation: 'Direct Manager', unit: 'Mobile Team' },
-      { initials: 'DM', name: 'Dalia Mansour', job: 'Product Director', relation: 'Direct Manager', unit: 'Product' },
-      { initials: 'HA', name: 'Hesham Adel', job: 'Chief Technology Officer', relation: 'Skip Manager', unit: 'Technology' },
-    ],
+    managers: HEAVY_MANAGERS,
     groups: [
       { initials: 'RC', name: 'Release Committee', type: 'Work group', roles: ['Lead', 'Reviewer'] },
       { initials: 'AG', name: 'Architecture Guild', type: 'Work group', roles: ['Member', 'Presenter'] },
