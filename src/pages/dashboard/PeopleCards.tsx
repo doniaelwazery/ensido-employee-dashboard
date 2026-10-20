@@ -1,14 +1,13 @@
-import { useState } from 'react'
 import { DASHBOARD } from '../../data/dashboard'
 import { Card, Chip, Icon, Skel, TONE, TextLink } from './shared'
 
 /* ---------- Managers + policies ---------- */
 
 export function ManagersCard({ managers, loading }: { managers: (typeof DASHBOARD)['busy']['managers']; loading: boolean }) {
-  const [more, setMore] = useState(false)
-  const list = more ? managers : managers.slice(0, 2)
-  // The header count covers direct managers only (skip managers etc. are listed but not counted)
-  const direct = managers.filter((m) => m.relation === 'Direct Manager').length
+  // The header count covers direct managers only; the card shows just the first one, the rest live in View Hierarchy
+  const directs = managers.filter((m) => m.relation === 'Direct Manager')
+  const direct = directs.length
+  const list = (directs.length ? directs : managers).slice(0, 1)
   return (
     <Card title="My Managers and Position" aside={<TextLink>View Hierarchy</TextLink>} busy={loading}>
       {loading ? (
@@ -32,9 +31,7 @@ export function ManagersCard({ managers, loading }: { managers: (typeof DASHBOAR
                 <Chip tone={{ bg: 'var(--color-grey-150)', stroke: 'var(--color-grey-200)', fg: 'var(--color-body-text)' }}>{m.unit}</Chip>
               </a>
             ))
-          )}
-          {managers.length > 2 && <TextLink onClick={() => setMore(!more)}>{more ? 'Show Less' : `Show ${managers.length - 2} More`}</TextLink>}
-        </div>
+          )}        </div>
       )}
       {!loading && (
         <div className="flex flex-col gap-2 border-t border-grey-200 pt-4">
