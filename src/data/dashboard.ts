@@ -29,6 +29,7 @@ export type DashData = {
   history: number[]
   achievements: [string, string][]
   policies: DashPolicy[]
+  overview?: { label: string; value: number }[]
 }
 
 const POLICIES: DashPolicy[] = [
@@ -149,6 +150,17 @@ export const DASHBOARD: Record<Scenario, DashData> = {
     history: [79, 74, 76, 72, 70, 66, 68, 58],
     achievements: [['H1 2026 Achievements', '2 Jul, 2026'], ['Q2 Release Highlights', '30 Jun, 2026'], ['Payments Stability Push', '22 Sep, 2026'], ['Customer App Launch', '12 Mar, 2026'], ['H2 2025 Achievements', '8 Jan, 2026'], ['Hackathon 2025 Winners', '14 Nov, 2025']],
     policies: [],
+    // more organization levels: the title stays fixed and the figures scroll sideways
+    overview: [
+      { label: 'Active Employees', value: 1240 },
+      { label: 'Business Units', value: 3 },
+      { label: 'Divisions', value: 6 },
+      { label: 'Active Departments', value: 18 },
+      { label: 'Active Domains', value: 9 },
+      { label: 'Active Teams', value: 64 },
+      { label: 'Squads', value: 112 },
+      { label: 'Locations', value: 7 },
+    ],
   },
   first: {
     summary: 'Your first evaluation round is open, and it closes in 9 days.',

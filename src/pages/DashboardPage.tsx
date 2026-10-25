@@ -63,6 +63,8 @@ function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOA
   const open = rounds.filter((r) => r.forms > r.submitted)
   const nextDays = open.length ? Math.min(...open.map((r) => r.days)) : 0
   const workGroups = d.groups.filter((g) => g.type === 'Work group')
+  const overview = d.overview ?? COMPANY_OVERVIEW
+  const many = overview.length > 4
 
   /* notifications read state */
   const [read, setRead] = useState<Record<string, boolean>>({})
@@ -123,7 +125,7 @@ function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOA
 
       <div className={`grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 ${!loading && history.length > 0 ? 'xl:grid-cols-3' : ''}`}>
         {!loading && history.length > 0 && <DistributionCard history={history} />}
-        <Card title="My Achievement Reports" aside={<TextLink>View All</TextLink>} gap="gap-2" busy={loading}>
+        <Card title="My Achievement Reports" aside={d.achievements.length > 0 && <TextLink>View All</TextLink>} gap="gap-2" busy={loading}>
           {loading ? (
             [0, 1, 2].map((i) => <Skel key={i} className="my-2 h-8" />)
           ) : d.achievements.length === 0 ? (
@@ -163,13 +165,13 @@ function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOA
         </Card>
       </div>
 
-      <section aria-labelledby="dash-overview" className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-grey-200 bg-card px-6 py-5">
-        <h2 id="dash-overview" className="text-base leading-6 font-semibold text-heading">Company Overview</h2>
-        <div className="grid min-w-0 flex-1 basis-120 grid-cols-2 gap-4 md:grid-cols-4">
-          {COMPANY_OVERVIEW.map((o) => (
-            <div key={o.label} className="flex flex-col gap-0.5 border-l border-grey-200 pl-4">
+      <section aria-labelledby="dash-overview" className={`flex items-center gap-x-8 gap-y-4 rounded-xl border border-grey-200 bg-card px-6 py-5 ${many ? '' : 'flex-wrap'}`}>
+        <h2 id="dash-overview" className="shrink-0 text-base leading-6 font-semibold text-heading">Company Overview</h2>
+        <div className={many ? 'classic-scroll flex min-w-0 flex-1 gap-4 overflow-x-auto pb-2' : 'grid min-w-0 flex-1 basis-120 grid-cols-2 gap-4 md:grid-cols-4'} tabIndex={many ? 0 : undefined} aria-label={many ? 'Company overview figures, scroll for more' : undefined}>
+          {overview.map((o) => (
+            <div key={o.label} className={`flex flex-col gap-0.5 border-l border-grey-200 pl-4 ${many ? 'w-36 shrink-0' : ''}`}>
               <span className="text-xs leading-4 text-light-text">{o.label}</span>
-              {loading ? <Skel className="my-1 h-5.5 w-12" /> : <span className="text-display-sm leading-7.5 font-semibold text-heading">{o.value}</span>}
+              {loading ? <Skel className="my-1 h-5.5 w-12" /> : <span className="text-display-sm leading-7.5 font-semibold text-heading">{o.value.toLocaleString('en-US')}</span>}
             </div>
           ))}
         </div>

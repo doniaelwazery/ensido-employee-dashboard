@@ -12,7 +12,7 @@ export function ManagersCard({ managers, loading }: { managers: (typeof DASHBOAR
   const shown = directs.length ? directs : managers
   const list = more ? shown : shown.slice(0, 2)
   return (
-    <Card title="My Managers and Position" aside={<TextLink>View Hierarchy</TextLink>} busy={loading}>
+    <Card title="My Managers and Position" aside={managers.length > 0 && <TextLink>View Hierarchy</TextLink>} busy={loading}>
       {loading ? (
         <div className="flex items-center gap-3"><span className="size-10 animate-pulse rounded-full bg-grey-150" /><span className="flex flex-1 flex-col gap-2"><Skel className="h-3 w-1/2" /><Skel className="h-2.5 w-1/3" /></span></div>
       ) : (
@@ -73,7 +73,7 @@ export function PoliciesCard({ policies, loading }: { policies: (typeof DASHBOAR
           ))
         )}
       </div>
-      {!loading && <div className="mt-auto border-t border-grey-200 pt-2.5"><TextLink>Browse All 12 Policies</TextLink></div>}
+      {!loading && policies.length > 0 && <div className="mt-auto border-t border-grey-200 pt-2.5"><TextLink>Browse All 12 Policies</TextLink></div>}
     </Card>
   )
 }

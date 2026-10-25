@@ -33,7 +33,7 @@ export function GoalsCard({ goals, loading }: { goals: DashGoal[]; loading: bool
           {!loading && goals.length > 0 && <span className="text-xs leading-4 font-normal text-light-text">{goals.length} goals</span>}
         </>
       }
-      aside={<TextLink>Open Goals</TextLink>}
+      aside={goals.length > 0 && <TextLink>Open Goals</TextLink>}
     >
       {loading ? (
         <>
