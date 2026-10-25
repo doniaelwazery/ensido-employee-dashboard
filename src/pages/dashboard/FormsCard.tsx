@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { type DashRound } from '../../data/dashboard'
-import { Bar, Chip, Empty, Icon, Ring, Skel, TextLink } from './shared'
+import { Bar, Chip, Empty, Icon, Ring, Skel, TextLink, progressColor } from './shared'
 
 /* ---------- Evaluation forms ---------- */
 
@@ -48,7 +48,7 @@ export function FormsCard({ rounds, loading, pendingTotal }: { rounds: DashRound
         <div className="flex items-center gap-4">
           {!loading && formsTotal > 0 && (
             <span className="flex items-center gap-2.5">
-              <Ring value={(subTotal / formsTotal) * 100} size={40} stroke={4.4} color="var(--color-primary)" track="var(--color-primary-lighter)" />
+              <Ring value={(subTotal / formsTotal) * 100} size={40} stroke={4.4} color={progressColor((subTotal / formsTotal) * 100)} track="var(--color-grey-150)" />
               <span className="flex flex-col">
                 <span className="text-sm leading-4.5 font-bold text-heading">{subTotal} / {formsTotal}</span>
                 <span className="text-2xs leading-3.5 text-light-text">forms submitted</span>
@@ -86,7 +86,7 @@ export function FormsCard({ rounds, loading, pendingTotal }: { rounds: DashRound
                     </span>
                     <span className="text-lg leading-6.5 font-bold text-heading">{spot.title}</span>
                     <span className="text-xs-plus leading-4.5 text-body-text">Deadline {date(spot.deadline)} · {spot.forms - spot.submitted} of {spot.forms} forms left</span>
-                    <Bar pct={(spot.submitted / spot.forms) * 100} color={st.accent} track="var(--color-white)" label={`${spot.title} forms submitted`} />
+                    <Bar pct={(spot.submitted / spot.forms) * 100} color={progressColor((spot.submitted / spot.forms) * 100)} track="var(--color-white)" label={`${spot.title} forms submitted`} />
                   </div>
                   <div role="timer" aria-label={`${cd.label} until ${spot.title} closes`} className="flex gap-2">
                     {cd.units.map(([v, l]) => (
@@ -159,7 +159,7 @@ export function FormsCard({ rounds, loading, pendingTotal }: { rounds: DashRound
                     </div>
                     <span className="text-xs leading-4 text-light-text">Deadline {date(x.deadline)} · {x.forms} forms · {pending} pending</span>
                     <div className="flex items-center gap-3">
-                      <Bar pct={(x.submitted / x.forms) * 100} color={done ? 'var(--color-success)' : u ? 'var(--color-danger)' : 'var(--color-primary)'} label={`${x.title} forms submitted`} />
+                      <Bar pct={(x.submitted / x.forms) * 100} color={progressColor((x.submitted / x.forms) * 100)} label={`${x.title} forms submitted`} />
                       <span className="text-xs leading-4 whitespace-nowrap text-body-text">{x.submitted} of {x.forms} submitted</span>
                     </div>
                   </div>

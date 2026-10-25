@@ -26,6 +26,12 @@ export const goalFlag = (g: DashGoal) => !!(g.sub && GOAL_SUB[g.sub].flag)
 /** Most urgent first: overdue, rejected, pending approval, then by main status. */
 export const goalRank = (g: DashGoal) => (g.sub ? GOAL_SUB[g.sub].rank : 3) * 10 + GOAL[g.status].rank
 export const goalLabel = (g: DashGoal) => GOAL[g.status].label + (g.sub ? ` - ${GOAL_SUB[g.sub].label}` : '')
+// Progress colours used in the app for goals and evaluation forms:
+// 0–39% red · 40–50% light red · 51–99% orange · 100% green
+export const progressColor = (pct: number) => {
+  const p = Math.round(pct)
+  return p >= 100 ? 'var(--color-success)' : p > 50 ? 'var(--color-warning)' : p >= 40 ? 'var(--color-danger-light)' : 'var(--color-danger)'
+}
 
 /* ---------- icons ---------- */
 

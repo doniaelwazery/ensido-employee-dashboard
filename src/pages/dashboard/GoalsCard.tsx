@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { type DashGoal } from '../../data/dashboard'
-import { Card, Dot, Empty, GOAL, GOAL_SUB, Icon, Pill, Ring, Skel, TextLink, goalFlag, goalLabel } from './shared'
+import { Card, Dot, Empty, GOAL, GOAL_SUB, Icon, Pill, Ring, Skel, TextLink, goalFlag, goalLabel, progressColor } from './shared'
 
 /* ---------- Goals ---------- */
 
@@ -45,7 +45,7 @@ export function GoalsCard({ goals, loading }: { goals: DashGoal[]; loading: bool
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-5">
-            <Ring value={msPct} size={104} stroke={10.4} color="var(--color-success)" track="var(--color-success-bg)" label={`${msDone} of ${msTotal} milestones completed across your goals`}>
+            <Ring value={msPct} size={104} stroke={10.4} color={progressColor(msPct)} track="var(--color-grey-150)" label={`${msDone} of ${msTotal} milestones completed across your goals`}>
               <span className="text-xl leading-6 font-bold text-heading">{msPct}%</span>
               <span className="text-3xs leading-3 text-light-text">milestones</span>
             </Ring>
@@ -84,7 +84,7 @@ export function GoalsCard({ goals, loading }: { goals: DashGoal[]; loading: bool
                 const pct = Math.round((g.done / g.total) * 100)
                 return (
                   <a key={g.title} href="#" onClick={(e) => e.preventDefault()} className={`group menu-in flex items-center gap-3.5 rounded-xl border px-4 py-3 transition-colors hover:border-primary-light ${flag ? 'border-danger-stroke bg-danger-surface' : 'border-grey-200 bg-white'}`} style={{ animationDelay: `${i * 50}ms` }}>
-                    <Ring value={pct} size={44} stroke={4.9} color={flag ? 'var(--color-danger)' : m.bar} track="var(--color-grey-150)">
+                    <Ring value={pct} size={44} stroke={4.9} color={progressColor(pct)} track="var(--color-grey-150)">
                       <span className="text-3xs leading-3 font-bold text-heading">{pct}%</span>
                     </Ring>
                     <span className="flex min-w-0 flex-1 flex-col gap-1">
