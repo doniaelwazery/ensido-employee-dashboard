@@ -1,7 +1,8 @@
 // Employee dashboard sample data (from the "Ensido Dashboards" Claude canvas, restyled to the ensido DS).
-// Three scenarios: typical, new employee (empty states), heavy use (overflow).
+// Four scenarios: typical, new employee (empty states), heavy use (overflow),
+// first round (the system's only round is ongoing, no previous rounds so no results yet).
 
-export type Scenario = 'typical' | 'new' | 'busy'
+export type Scenario = 'typical' | 'new' | 'busy' | 'first'
 
 export type DashRound = { title: string; covered: string; deadline: string; days: number; forms: number; submitted: number }
 // Main status + optional sub status (Figma 25834:86493, My Goals table):
@@ -148,6 +149,31 @@ export const DASHBOARD: Record<Scenario, DashData> = {
     history: [79, 74, 76, 72, 70, 66, 68, 58],
     achievements: [['H1 2026 Achievements', '2 Jul, 2026'], ['Q2 Release Highlights', '30 Jun, 2026'], ['Payments Stability Push', '22 Sep, 2026'], ['Customer App Launch', '12 Mar, 2026'], ['H2 2025 Achievements', '8 Jan, 2026'], ['Hackathon 2025 Winners', '14 Nov, 2025']],
     policies: [],
+  },
+  first: {
+    summary: 'Your first evaluation round is open, and it closes in 9 days.',
+    rounds: [
+      { title: 'Q3 2026 Performance Review', covered: 'From 1 Jul, 2026 to 30 Sep, 2026', deadline: '21 Oct, 2026', days: 9, forms: 6, submitted: 2 },
+    ],
+    notes: [
+      { id: 'f1', type: 'eval', urgent: true, title: 'New evaluation round', body: 'Q3 2026 Performance Review is open until 21 Oct. 6 forms are assigned to you.', when: '2 hours ago' },
+      { id: 'f2', type: 'goal', title: 'Goal approved', body: 'Ahmed Fathy approved “Reduce API p95 latency to under 300 ms”.', when: 'Yesterday' },
+      { id: 'f3', type: 'people', read: true, title: 'Added to a work group', body: 'You were added to Mobile Squad as Member.', when: '5 Oct, 2026' },
+      { id: 'f4', type: 'policy', read: true, title: 'New policy', body: 'Travel Expense Policy was added.', when: '24 Sep, 2026' },
+    ],
+    notesTotal: 4,
+    goals: [
+      { title: 'Reduce API p95 latency to under 300 ms', status: 'in_progress', done: 2, total: 5, updated: '8 Oct, 2026' },
+      { title: 'Mentor two junior engineers', status: 'not_started', sub: 'pending', done: 0, total: 2, updated: null },
+      { title: 'Migrate CI pipelines to GitHub Actions', status: 'not_started', done: 0, total: 4, updated: null },
+    ],
+    managers: HEAVY_MANAGERS,
+    groups: [
+      { initials: 'MS', name: 'Mobile Squad', type: 'Work group', roles: ['Member'] },
+      { initials: 'RC', name: 'Release Committee', type: 'Work group', roles: ['Reviewer'] },
+    ],
+    kpis: [], history: [], achievements: [],
+    policies: POLICIES,
   },
 }
 

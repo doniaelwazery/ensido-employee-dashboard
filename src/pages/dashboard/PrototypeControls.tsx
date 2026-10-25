@@ -4,7 +4,7 @@ import { type Scenario } from '../../data/dashboard'
 /* ---------- prototype controls ---------- */
 
 export function Controls({ scenario, setScenario, loading, reload, fail, setFail, many, setMany }: { scenario: Scenario; setScenario: (s: Scenario) => void; loading: boolean; reload: () => void; fail: boolean; setFail: (v: boolean) => void; many: boolean; setMany: (v: boolean) => void }) {
-  const opts: [Scenario, string][] = [['typical', 'Typical'], ['new', 'New Employee'], ['busy', 'Heavy Use']]
+  const opts: [Scenario, string][] = [['typical', 'Typical'], ['new', 'New Employee'], ['busy', 'Heavy Use'], ['first', 'First Round']]
   const [open, setOpen] = useState(false)
   return (
     <div role="region" aria-label="Prototype controls" className="fixed right-4 bottom-4 z-40 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-2">

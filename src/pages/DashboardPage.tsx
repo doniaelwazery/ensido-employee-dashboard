@@ -10,7 +10,7 @@ import { HistoryCard } from './dashboard/HistoryCard'
 import { NotificationsCard } from './dashboard/NotificationsCard'
 import { ManagersCard, PoliciesCard } from './dashboard/PeopleCards'
 import { Controls } from './dashboard/PrototypeControls'
-import { Card, Chip, Empty, Icon, Skel, TextLink, goalFlag, goalRank } from './dashboard/shared'
+import { Card, Empty, Icon, Skel, TextLink, goalFlag, goalRank } from './dashboard/shared'
 
 // Employee dashboard — the original "Ensido Dashboards" Claude canvas look inside the ensido shell
 // (Figma: Dashboard Research › "Employee Dashboard — Ensido Style", Typical 29211:17626 / New Employee 29220:21367).
@@ -18,10 +18,10 @@ import { Card, Chip, Empty, Icon, Skel, TextLink, goalFlag, goalRank } from './d
 /* ---------- page ---------- */
 
 export function DashboardPage() {
-  // ?scenario=new|busy opens a data scenario directly (shareable prototype links)
+  // ?scenario=new|busy|first opens a data scenario directly (shareable prototype links)
   const [scenario, setScenarioRaw] = useState<Scenario>(() => {
     const q = new URLSearchParams(location.search).get('scenario')
-    return q === 'new' || q === 'busy' ? q : 'typical'
+    return q === 'new' || q === 'busy' || q === 'first' ? q : 'typical'
   })
   const [loading, setLoading] = useState(true)
   const [fail, setFail] = useState(false)
@@ -62,6 +62,7 @@ function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOA
   const pendingTotal = rounds.reduce((s, r) => s + r.forms - r.submitted, 0)
   const open = rounds.filter((r) => r.forms > r.submitted)
   const nextDays = open.length ? Math.min(...open.map((r) => r.days)) : 0
+  const workGroups = d.groups.filter((g) => g.type === 'Work group')
 
   /* notifications read state */
   const [read, setRead] = useState<Record<string, boolean>>({})
@@ -140,29 +141,20 @@ function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOA
             </div>
           )}
         </Card>
-        <Card title="My Work Groups" aside={d.groups.length > 0 && !loading && <span className="text-xs leading-4 text-light-text">{d.groups.length} groups</span>} gap="gap-3.5" busy={loading}>
+        <Card title="My Work Groups" aside={workGroups.length > 0 && !loading && <span className="text-xs leading-4 text-light-text">{workGroups.length} groups</span>} gap="gap-3.5" busy={loading}>
           {loading ? (
             [0, 1, 2].map((i) => <Skel key={i} className="h-9" />)
-          ) : d.groups.length === 0 ? (
-            <p className="text-sm leading-5 text-light-text">You are not in any work group or on-demand group yet. Groups you join will appear here with your role.</p>
+          ) : workGroups.length === 0 ? (
+            <p className="text-sm leading-5 text-light-text">You are not in any work group yet. Work groups you join will appear here.</p>
           ) : (
             <>
-              {d.groups.slice(0, 4).map((g) => {
-                const od = g.type !== 'Work group'
-                return (
-                  <div key={g.name} className="flex items-start gap-3">
-                    <span className={`flex size-9 shrink-0 items-center justify-center rounded-lg border text-xs font-semibold text-primary-dark ${od ? 'border-purple-stroke bg-purple-bg' : 'border-primary-light bg-row-hover'}`}>{g.initials}</span>
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <p className="flex flex-wrap items-baseline gap-x-2 text-sm leading-5 font-medium text-heading">
-                        {g.name}
-                        <span className="text-xs leading-4 font-normal text-light-text">{g.type}</span>
-                      </p>
-                      <div className="flex flex-wrap gap-1">{g.roles.map((r) => <Chip key={r} tone={{ bg: 'var(--color-grey-150)', stroke: 'var(--color-grey-200)', fg: 'var(--color-body-text)' }}>{r}</Chip>)}</div>
-                    </div>
-                  </div>
-                )
-              })}
-              {d.groups.length > 4 && <TextLink>View All {d.groups.length} Groups</TextLink>}
+              {workGroups.slice(0, 4).map((g) => (
+                <div key={g.name} className="flex items-center gap-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary-light bg-row-hover text-xs font-semibold text-primary-dark">{g.initials}</span>
+                  <p className="min-w-0 text-sm leading-5 font-medium text-heading">{g.name}</p>
+                </div>
+              ))}
+              {workGroups.length > 4 && <TextLink>View All {workGroups.length} Groups</TextLink>}
             </>
           )}
         </Card>
