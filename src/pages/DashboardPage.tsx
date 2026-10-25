@@ -10,7 +10,7 @@ import { HistoryCard } from './dashboard/HistoryCard'
 import { NotificationsCard } from './dashboard/NotificationsCard'
 import { ManagersCard, PoliciesCard } from './dashboard/PeopleCards'
 import { Controls } from './dashboard/PrototypeControls'
-import { Card, Empty, Icon, Skel, TextLink, goalFlag, goalRank } from './dashboard/shared'
+import { Card, Chip, Empty, Icon, Skel, TextLink, goalFlag, goalRank } from './dashboard/shared'
 
 // Employee dashboard — the original "Ensido Dashboards" Claude canvas look inside the ensido shell
 // (Figma: Dashboard Research › "Employee Dashboard — Ensido Style", Typical 29211:17626 / New Employee 29220:21367).
@@ -145,13 +145,16 @@ function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOA
           {loading ? (
             [0, 1, 2].map((i) => <Skel key={i} className="h-9" />)
           ) : workGroups.length === 0 ? (
-            <p className="text-sm leading-5 text-light-text">You are not in any work group yet. Work groups you join will appear here.</p>
+            <p className="text-sm leading-5 text-light-text">You are not in any work group yet. Work groups you join will appear here with your role.</p>
           ) : (
             <>
               {workGroups.slice(0, 4).map((g) => (
-                <div key={g.name} className="flex items-center gap-3">
+                <div key={g.name} className="flex items-start gap-3">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary-light bg-row-hover text-xs font-semibold text-primary-dark">{g.initials}</span>
-                  <p className="min-w-0 text-sm leading-5 font-medium text-heading">{g.name}</p>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <p className="text-sm leading-5 font-medium text-heading">{g.name}</p>
+                    <div className="flex flex-wrap gap-1">{g.roles.map((r) => <Chip key={r} tone={{ bg: 'var(--color-grey-150)', stroke: 'var(--color-grey-200)', fg: 'var(--color-body-text)' }}>{r}</Chip>)}</div>
+                  </div>
                 </div>
               ))}
               {workGroups.length > 4 && <TextLink>View All {workGroups.length} Groups</TextLink>}
