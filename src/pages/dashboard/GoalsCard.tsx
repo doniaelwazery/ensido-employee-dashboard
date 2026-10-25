@@ -27,13 +27,8 @@ export function GoalsCard({ goals, loading }: { goals: DashGoal[]; loading: bool
       className="h-full"
       gap="gap-5"
       busy={loading}
-      title={
-        <>
-          My Goals
-          {!loading && goals.length > 0 && <span className="text-xs leading-4 font-normal text-light-text">{goals.length} goals</span>}
-        </>
-      }
-      aside={goals.length > 0 && <TextLink>Open Goals</TextLink>}
+      title="My Goals"
+      aside={!loading && goals.length > 0 && <TextLink>View All {goals.length} Goals</TextLink>}
     >
       {loading ? (
         <>
@@ -116,7 +111,6 @@ export function GoalsCard({ goals, loading }: { goals: DashGoal[]; loading: bool
           {list.length > 0 && (
             <div className="mt-auto flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs leading-4 text-light-text">Showing {Math.min(4, list.length)} of {list.length} · most urgent first</span>
-              {list.length > 4 && <TextLink arrow>View All {list.length} Goals</TextLink>}
             </div>
           )}
         </>
