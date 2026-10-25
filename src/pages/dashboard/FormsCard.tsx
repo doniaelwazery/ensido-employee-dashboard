@@ -55,7 +55,6 @@ export function FormsCard({ rounds, loading, pendingTotal }: { rounds: DashRound
               </span>
             </span>
           )}
-          {rounds.length > 0 && <TextLink>View Evaluation Rounds</TextLink>}
         </div>
       </div>
 

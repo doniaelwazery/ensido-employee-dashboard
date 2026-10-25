@@ -167,15 +167,57 @@ function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOA
 
       <section aria-labelledby="dash-overview" className={`flex items-center gap-x-8 gap-y-4 rounded-xl border border-grey-200 bg-card px-6 py-5 ${many ? '' : 'flex-wrap'}`}>
         <h2 id="dash-overview" className="shrink-0 text-base leading-6 font-semibold text-heading">Company Overview</h2>
-        <div className={many ? 'classic-scroll flex min-w-0 flex-1 gap-4 overflow-x-auto pb-2' : 'grid min-w-0 flex-1 basis-120 grid-cols-2 gap-4 md:grid-cols-4'} tabIndex={many ? 0 : undefined} aria-label={many ? 'Company overview figures, scroll for more' : undefined}>
-          {overview.map((o) => (
-            <div key={o.label} className={`flex flex-col gap-0.5 border-l border-grey-200 pl-4 ${many ? 'w-36 shrink-0' : ''}`}>
-              <span className="text-xs leading-4 text-light-text">{o.label}</span>
-              {loading ? <Skel className="my-1 h-5.5 w-12" /> : <span className="text-display-sm leading-7.5 font-semibold text-heading">{o.value.toLocaleString('en-US')}</span>}
-            </div>
-          ))}
-        </div>
+        {many ? (
+          <OverviewScroller>{overview.map((o) => <OverviewStat key={o.label} o={o} loading={loading} className="w-36 shrink-0 snap-start" />)}</OverviewScroller>
+        ) : (
+          <div className="grid min-w-0 flex-1 basis-120 grid-cols-2 gap-4 md:grid-cols-4">
+            {overview.map((o) => <OverviewStat key={o.label} o={o} loading={loading} />)}
+          </div>
+        )}
       </section>
     </>
+  )
+}
+
+function OverviewStat({ o, loading, className = '' }: { o: { label: string; value: number }; loading: boolean; className?: string }) {
+  return (
+    <div className={`flex flex-col gap-0.5 border-l border-grey-200 pl-4 ${className}`}>
+      <span className="text-xs leading-4 text-light-text">{o.label}</span>
+      {loading ? <Skel className="my-1 h-5.5 w-12" /> : <span className="text-display-sm leading-7.5 font-semibold text-heading">{o.value.toLocaleString('en-US')}</span>}
+    </div>
+  )
+}
+
+/* Company Overview with more levels: the figures scroll sideways with small arrows (no scrollbar) */
+function OverviewScroller({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [edge, setEdge] = useState({ start: true, end: false })
+  const update = () => {
+    const el = ref.current
+    if (!el) return
+    setEdge({ start: el.scrollLeft <= 1, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 1 })
+  }
+  useEffect(() => {
+    update()
+    const ro = new ResizeObserver(update)
+    if (ref.current) ro.observe(ref.current)
+    return () => ro.disconnect()
+  }, [])
+  // soft fade on the side that has more figures, so a partly visible tile doesn't look clipped
+  const fade = `linear-gradient(to right, ${edge.start ? '#000' : 'transparent'}, #000 32px, #000 calc(100% - 32px), ${edge.end ? '#000' : 'transparent'})`
+  const step = (dir: 1 | -1) => ref.current?.scrollBy({ left: dir * 160 * 2, behavior: 'smooth' })
+  const btn = 'flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-grey-200 bg-card text-body-text transition-colors hover:border-primary-light hover:text-primary disabled:cursor-default disabled:opacity-40 disabled:hover:border-grey-200 disabled:hover:text-body-text'
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-2">
+      <button type="button" aria-label="Previous figures" disabled={edge.start} onClick={() => step(-1)} className={btn}>
+        <Icon name="chev" size={14} className="rotate-180" />
+      </button>
+      <div ref={ref} onScroll={update} style={{ maskImage: fade, WebkitMaskImage: fade }} className="no-scrollbar flex min-w-0 flex-1 snap-x snap-mandatory gap-4 overflow-x-auto">
+        {children}
+      </div>
+      <button type="button" aria-label="Next figures" disabled={edge.end} onClick={() => step(1)} className={btn}>
+        <Icon name="chev" size={14} />
+      </button>
+    </div>
   )
 }

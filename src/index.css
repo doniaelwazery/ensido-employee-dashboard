@@ -104,6 +104,13 @@
     border-radius: 100px;
     border: 1px solid var(--color-grey-200);
   }
+  /* Scrollable row driven by arrow buttons (Company Overview, heavy use) */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Popover menus */
