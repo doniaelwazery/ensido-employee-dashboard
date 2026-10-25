@@ -152,12 +152,12 @@ export const DASHBOARD: Record<Scenario, DashData> = {
     policies: [],
     // more organization levels: the title stays fixed and the figures scroll sideways
     overview: [
-      { label: 'Active Employees', value: 1240 },
+      { label: 'Employees', value: 1240 },
       { label: 'Business Units', value: 3 },
       { label: 'Divisions', value: 6 },
-      { label: 'Active Departments', value: 18 },
-      { label: 'Active Domains', value: 9 },
-      { label: 'Active Teams', value: 64 },
+      { label: 'Departments', value: 18 },
+      { label: 'Domains', value: 9 },
+      { label: 'Teams', value: 64 },
       { label: 'Squads', value: 112 },
       { label: 'Locations', value: 7 },
     ],
@@ -201,10 +201,10 @@ export const HISTORY_META = [
 ] as const
 
 export const COMPANY_OVERVIEW = [
-  { label: 'Active Employees', value: 248 },
-  { label: 'Active Departments', value: 9 },
-  { label: 'Active Domains', value: 4 },
-  { label: 'Active Teams', value: 31 },
+  { label: 'Employees', value: 248 },
+  { label: 'Departments', value: 9 },
+  { label: 'Domains', value: 4 },
+  { label: 'Teams', value: 31 },
 ]
 
 // Score categories used by the employee dashboard (Figma 29211:17626)
