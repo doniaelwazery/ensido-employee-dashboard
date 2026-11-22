@@ -69,11 +69,23 @@ export default function App() {
   const tabs =
     role === 'employee' ? undefined : (
       <div role="tablist" aria-label="Dashboard view" className="flex gap-1 rounded-lg border border-grey-200 bg-white p-1">
-        {([['my', 'My Dashboard'], ['company', 'Company Dashboard']] as const).map(([v, l]) => (
-          <button key={v} type="button" role="tab" aria-selected={view === v} onClick={() => setView(v)} className={`h-8 cursor-pointer rounded-md px-3.5 text-sm font-medium whitespace-nowrap transition-colors ${view === v ? 'bg-primary text-white' : 'text-body-text hover:bg-row-hover hover:text-primary'}`}>
-            {l}
-          </button>
-        ))}
+        {([['my', 'My Dashboard'], ['company', 'Company Dashboard']] as const).map(([v, l]) => {
+          const on = view === v
+          return (
+            <button key={v} type="button" role="tab" aria-selected={on} onClick={() => setView(v)} className={`flex h-8 cursor-pointer items-center gap-2 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors ${on ? 'bg-primary text-white' : 'text-body-text hover:bg-row-hover hover:text-primary'}`}>
+              {v === 'my' ? (
+                // the signed-in user's initials: "this is about me"
+                <span aria-hidden="true" className={`flex size-5 items-center justify-center rounded-full text-3xs leading-3 font-semibold ${on ? 'bg-white text-primary' : 'bg-primary-lighter text-primary-dark'}`}>
+                  {user.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}
+                </span>
+              ) : (
+                // the organization icon from the side menu, tinted with currentColor
+                <span aria-hidden="true" className="size-4 shrink-0 bg-current [mask:url(/assets/org-icon.svg)_center/contain_no-repeat]" />
+              )}
+              {l}
+            </button>
+          )
+        })}
       </div>
     )
 

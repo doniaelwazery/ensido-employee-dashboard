@@ -1,8 +1,8 @@
 import { createPortal } from 'react-dom'
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { category } from '../data/dashboard'
 import { COMPANY, dayStr, isoToOffset, offsetToIso, USERS, type CompanyScenario, type OverdueEvaluator, type Role } from '../data/company'
-import { CountUp, TiltCard } from './dashboard/Hero'
+import { CountUp } from './dashboard/Hero'
 import { Dot, Icon, Ring, Skel } from './dashboard/shared'
 import { Dialog, Toast } from './company/Dialog'
 import { ResultsCard } from './company/ResultsCard'
@@ -201,48 +201,19 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
       )}
 
       <CompanyHero
-        name={user.name.split(' ')[0]}
-        scope={team ? 'Your teams · 18 employees' : `Acme Corporation · ${fmt(d.employees)} employee${d.employees === 1 ? '' : 's'}`}
+        team={team}
+        title={team ? 'Your Teams' : 'Acme Corporation'}
+        subtitle={team ? 'Engineering · Mobile, Backend and QA teams · 18 employees' : `Company overview · ${fmt(d.employees)} employee${d.employees === 1 ? '' : 's'}`}
         summary={summary}
+        urgent={items.some((i) => i.sev === 'critical')}
         tiles={tiles}
+        kpis={kpis}
+        kpiErr={kpiErr}
+        onRetryKpi={() => setFixed((f) => ({ ...f, kpi: true }))}
         loading={loading}
         jump={jump}
-        latest={ls && !resErr ? { avg: ls.avg, short: latest.short, delta: ps ? ls.avg - ps.avg : null, prevShort: d.completed[1]?.short, team } : null}
+        latest={ls && !resErr ? { avg: ls.avg, short: latest.short, delta: ps ? ls.avg - ps.avg : null, prevShort: d.completed[1]?.short } : null}
       />
-
-      {/* key numbers */}
-      <section aria-labelledby="co-kpis" className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-xl border border-grey-200 bg-card px-6 py-5">
-        <h2 id="co-kpis" className="shrink-0 text-base leading-6 font-semibold text-heading">{team ? 'Your Teams' : 'Key Numbers'}</h2>
-        {kpiErr && !loading ? (
-          <div role="alert" className="flex min-w-0 flex-1 flex-wrap items-center gap-3 text-sm leading-5 text-body-text">
-            <Icon name="alert" size={18} color="var(--color-danger)" />
-            <span className="flex-1">Could not load the key numbers. The rest of the dashboard is up to date.</span>
-            <button type="button" onClick={() => setFixed((f) => ({ ...f, kpi: true }))} className="h-9 cursor-pointer rounded-lg border border-primary bg-white px-4 text-sm font-medium text-primary hover:bg-body-bg">Try Again</button>
-          </div>
-        ) : (
-          <div className={`grid min-w-0 flex-1 basis-120 grid-cols-2 gap-4 ${kpis.length === 4 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
-            {kpis.map((k) => (
-              <div key={k.label} className="flex flex-col gap-0.5 border-l border-grey-200 pl-4">
-                <span className="text-xs leading-4 text-light-text">{k.label}</span>
-                {loading ? (
-                  <Skel className="my-1 h-5.5 w-14" />
-                ) : (
-                  <span className="flex items-baseline gap-2">
-                    <span className="text-display-sm leading-7.5 font-semibold text-heading">{k.value}</span>
-                    {k.delta != null && (
-                      <span className="inline-flex items-center gap-0.5 text-xs leading-4 font-medium" style={{ color: k.delta >= 0 ? 'var(--color-success-dark)' : 'var(--color-danger-dark)' }}>
-                        <Icon name="up" size={11} sw={2.6} className={k.delta >= 0 ? '' : 'rotate-180'} />
-                        {k.delta >= 0 ? '+' : '−'}{Math.abs(k.delta)}
-                      </span>
-                    )}
-                  </span>
-                )}
-                <span className="text-2xs leading-3.5 text-light-text">{loading ? 'Loading' : k.note}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
 
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.79fr)_minmax(0,1fr)]">
         <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} />
@@ -305,107 +276,122 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
   )
 }
 
-/* ---------- hero ---------- */
+/* ---------- hero ----------
+   Deliberately different from My Dashboard's navy, personal hero: a light lavender "company header" with the
+   organization's logo and name, a status line, and the numbers first, so users always know which view they are in. */
 
 type Tile = { label: string; value: number; suffix: string; hint: string; dot: string; target: string; empty?: boolean }
-function CompanyHero({ name, scope, summary, tiles, loading, jump, latest }: { name: string; scope: string; summary: string; tiles: Tile[]; loading: boolean; jump: (id: string) => void; latest: { avg: number; short: string; delta: number | null; prevShort?: string; team: boolean } | null }) {
-  const ref = useRef<HTMLElement>(null)
-  const frame = useRef(0)
-  const move = (e: ReactPointerEvent<HTMLElement>) => {
-    if (e.pointerType === 'touch') return
-    const { clientX: x, clientY: y } = e
-    cancelAnimationFrame(frame.current)
-    frame.current = requestAnimationFrame(() => {
-      const el = ref.current
-      if (!el) return
-      const r = el.getBoundingClientRect()
-      el.style.setProperty('--mx', `${x - r.left}px`)
-      el.style.setProperty('--my', `${y - r.top}px`)
-      el.querySelectorAll<HTMLElement>('.glow-tile').forEach((t) => {
-        const b = t.getBoundingClientRect()
-        t.style.setProperty('--x', `${x - b.left}px`)
-        t.style.setProperty('--y', `${y - b.top}px`)
-      })
-      el.dataset.lit = ''
-    })
-  }
-  const leave = () => {
-    cancelAnimationFrame(frame.current)
-    if (ref.current) delete ref.current.dataset.lit
-  }
-  useEffect(() => () => cancelAnimationFrame(frame.current), [])
+type Kpi = { label: string; value: string; note: string; delta?: number }
+function CompanyHero({ team, title, subtitle, summary, urgent, tiles, kpis, kpiErr, onRetryKpi, loading, jump, latest }: { team: boolean; title: string; subtitle: string; summary: string; urgent: boolean; tiles: Tile[]; kpis: Kpi[]; kpiErr: boolean; onRetryKpi: () => void; loading: boolean; jump: (id: string) => void; latest: { avg: number; short: string; delta: number | null; prevShort?: string } | null }) {
   const cat = latest ? category(latest.avg) : null
-  const ringColor = cat?.key === 'exceeds' ? 'var(--color-primary-light)' : cat?.color
-
+  const tile = 'rise group relative flex cursor-pointer flex-col gap-1.5 rounded-xl border border-grey-200 bg-card px-4 py-3.5 text-left shadow-card transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary-light hover:shadow-focus-card'
   return (
-    <section ref={ref} onPointerMove={move} onPointerLeave={leave} aria-labelledby="co-hero-title" className="hero relative flex flex-col gap-7 overflow-hidden rounded-2xl bg-secondary px-8 py-7 text-white lg:flex-row lg:items-center lg:gap-10">
-      <span aria-hidden="true" className="hero-aurora" />
-      <span aria-hidden="true" className="hero-spot" />
-      <span aria-hidden="true" className="hero-grid" />
-      <svg aria-hidden="true" width="420" height="420" viewBox="0 0 420 420" fill="none" className="pointer-events-none absolute -top-37.5 -right-27.5">
-        <circle cx="210" cy="210" r="200" stroke="var(--color-primary-dark)" strokeWidth="2" opacity="0.25" />
-        <circle cx="210" cy="210" r="150" stroke="var(--color-primary-dark)" strokeWidth="2" opacity="0.18" />
-        <circle cx="210" cy="210" r="100" stroke="var(--color-primary)" strokeWidth="2" opacity="0.14" />
-        <circle cx="210" cy="210" r="50" stroke="var(--color-primary)" strokeWidth="2" opacity="0.1" />
+    <section aria-labelledby="co-hero-title" className="relative overflow-hidden rounded-2xl border border-primary-light bg-card" style={{ backgroundImage: 'linear-gradient(120deg, var(--color-row-hover) 0%, var(--color-primary-lighter) 55%, var(--color-row-hover) 100%)' }}>
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-60 [background-image:radial-gradient(var(--color-primary-light)_1px,transparent_1.2px)] [background-size:22px_22px] [mask-image:linear-gradient(to_left,#000,transparent_55%)]" />
+      <svg aria-hidden="true" width="420" height="420" viewBox="0 0 420 420" fill="none" className="pointer-events-none absolute -top-45 -right-30">
+        <circle cx="210" cy="210" r="200" stroke="var(--color-primary-light)" strokeWidth="2" opacity="0.5" />
+        <circle cx="210" cy="210" r="150" stroke="var(--color-primary-light)" strokeWidth="2" opacity="0.4" />
+        <circle cx="210" cy="210" r="100" stroke="var(--color-primary-light)" strokeWidth="2" opacity="0.3" />
       </svg>
-      <div className="relative flex min-w-0 flex-1 flex-col gap-5">
-        <div className="flex flex-col gap-1.5">
-          <p className="rise flex flex-wrap items-center gap-2 text-xs leading-4 text-primary-light">
-            Monday, 12 October 2026
-            <span className="rounded-full border border-white/20 bg-white/[0.07] px-2 py-0.5 text-2xs leading-3.5 font-medium text-white">{scope}</span>
-          </p>
-          <h2 id="co-hero-title" className="rise text-display leading-9 font-bold" style={{ animationDelay: '80ms' }}>Good morning, {name}</h2>
-          {loading ? <Skel className="my-1 h-3 w-96 max-w-full bg-white/15" /> : <p className="rise max-w-140 text-sm leading-5 text-grey-200" style={{ animationDelay: '160ms' }}>{summary}</p>}
+
+      <div className="relative flex flex-col gap-6 px-6 pt-6 pb-6 sm:px-8 sm:pt-7">
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="rise flex size-14 shrink-0 items-center justify-center rounded-xl bg-secondary shadow-primary">
+            {team ? <Icon name="people" size={26} color="var(--color-white)" sw={1.8} /> : <img src="/assets/org-icon.svg" alt="" width={26} height={25} />}
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <p className="rise flex flex-wrap items-center gap-2 text-xs leading-4 text-light-text">
+              <span className="rounded-full bg-primary px-2 py-0.5 text-2xs leading-3.5 font-semibold text-white">Company Dashboard</span>
+              Monday, 12 October 2026
+            </p>
+            <h2 id="co-hero-title" className="rise text-display leading-9 font-bold text-heading" style={{ animationDelay: '60ms' }}>{title}</h2>
+            <p className="rise text-sm leading-5 text-body-text" style={{ animationDelay: '100ms' }}>{subtitle}</p>
+          </div>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+        {loading ? (
+          <Skel className="h-11 w-full max-w-180 rounded-lg" />
+        ) : (
+          <button type="button" onClick={() => jump('co-attention')} className="rise group flex w-fit max-w-full cursor-pointer items-center gap-3 rounded-lg border border-grey-200 bg-card/80 px-4 py-2.5 text-left text-sm leading-5 text-heading backdrop-blur-sm transition-colors hover:border-primary-light" style={{ animationDelay: '140ms' }}>
+            <span className="relative flex size-2 shrink-0">
+              {urgent && <span className="absolute inset-0 animate-ping rounded-full bg-danger" />}
+              <span className={`relative size-2 rounded-full ${urgent ? 'bg-danger' : 'bg-success'}`} />
+            </span>
+            <span className="min-w-0">{summary}</span>
+            <Icon name="arrow" size={14} color="var(--color-primary)" className="transition-transform group-hover:translate-x-0.5" />
+          </button>
+        )}
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {tiles.map((t, i) => (
-            <button key={t.label} type="button" onClick={() => jump(t.target)} style={{ animationDelay: `${240 + i * 90}ms` }} className="glow-tile rise relative flex cursor-pointer flex-col gap-1.5 rounded-xl border border-white/15 bg-white/[0.07] px-4 py-3.5 text-left transition-colors hover:border-primary-light hover:bg-white/[0.12]">
-              <span className="flex items-center gap-2 text-xs leading-4 font-medium text-primary-light">
-                <Dot color={loading ? 'color-mix(in srgb, var(--color-white) 25%, transparent)' : t.dot} />
+            <button key={t.label} type="button" onClick={() => jump(t.target)} className={tile} style={{ animationDelay: `${200 + i * 70}ms` }}>
+              <span className="flex items-center gap-2 text-xs leading-4 font-medium text-light-text">
+                <Dot color={loading ? 'var(--color-grey-200)' : t.dot} />
                 {t.label}
               </span>
-              {loading ? <Skel className="my-1 h-7 w-11 rounded-md bg-white/15" /> : <span className="text-3xl leading-9 font-bold">{t.empty ? '—' : <><CountUp value={t.value} />{t.suffix}</>}</span>}
-              <span className="text-xs leading-4 text-grey-200">{loading ? 'Loading' : t.hint}</span>
+              {loading ? <Skel className="my-1 h-7 w-12" /> : <span className="text-3xl leading-9 font-bold text-heading">{t.empty ? '—' : <><CountUp value={t.value} />{t.suffix}</>}</span>}
+              <span className="text-xs leading-4 text-light-text">{loading ? 'Loading' : t.hint}</span>
             </button>
           ))}
+          <button type="button" onClick={() => jump('co-results')} className={tile} style={{ animationDelay: '480ms' }}>
+            <span className="flex items-center gap-2 text-xs leading-4 font-medium text-light-text">
+              <Dot color={loading || !cat ? 'var(--color-grey-200)' : cat.color} />
+              {latest ? `Average score · ${latest.short}` : 'Average score'}
+            </span>
+            {loading ? (
+              <Skel className="my-1 h-7 w-16" />
+            ) : latest && cat ? (
+              <span className="flex items-center gap-3">
+                <span className="text-3xl leading-9 font-bold text-heading">{latest.avg}%</span>
+                <Ring value={latest.avg} size={34} stroke={4.5} color={cat.color} track="var(--color-grey-150)" />
+              </span>
+            ) : (
+              <span className="text-3xl leading-9 font-bold text-heading">—</span>
+            )}
+            <span className="text-xs leading-4 text-light-text">
+              {loading ? 'Loading' : latest && cat ? (
+                <>
+                  {cat.label}
+                  {latest.delta != null && <span className="font-medium" style={{ color: latest.delta >= 0 ? 'var(--color-success-dark)' : 'var(--color-danger-dark)' }}> · {latest.delta >= 0 ? '+' : ''}{latest.delta.toFixed(1)} pts</span>}
+                </>
+              ) : 'After your first round closes'}
+            </span>
+          </button>
         </div>
       </div>
-      <TiltCard className="relative flex shrink-0 flex-col items-center justify-center gap-3.5 self-stretch rounded-panel border border-white/20 bg-white/[0.07] px-6 py-5 text-center lg:w-65">
-        {loading ? (
-          <span className="size-33 animate-pulse rounded-full border-12 border-white/10" />
-        ) : latest && cat ? (
-          <>
-            <p className="text-xs leading-4 font-medium text-primary-light">Last Round · {latest.short}</p>
-            <span className="tilt-pop block">
-              <Ring value={latest.avg} size={140} stroke={10.6} color={ringColor!} track="color-mix(in srgb, var(--color-white) 12%, transparent)" label={`${latest.team ? 'Team' : 'Company'} average ${latest.avg}% in ${latest.short}, ${cat.label}`}>
-                <span className="text-display-lg leading-9.5 font-bold">{latest.avg}%</span>
-                <span className="text-2xs leading-3.5 text-primary-light">{latest.team ? 'Team average' : 'Company average'}</span>
-              </Ring>
-            </span>
-            <div className="tilt-pop-sm flex flex-col items-center gap-1.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs leading-4 font-semibold" style={{ color: cat.fg }}>
-                <Dot color={ringColor!} size={6} />
-                {cat.label}
-              </span>
-              {latest.delta != null && (
-                <span className="inline-flex items-center gap-1 text-xs leading-4 font-medium" style={{ color: latest.delta >= 0 ? 'var(--color-success-stroke)' : 'var(--color-danger-stroke)' }}>
-                  <Icon name="up" size={12} sw={2.6} className={latest.delta >= 0 ? '' : 'rotate-180'} />
-                  {latest.delta >= 0 ? '+' : ''}{latest.delta.toFixed(1)} pts since {latest.prevShort}
-                </span>
-              )}
-            </div>
-            <button type="button" onClick={() => jump('co-results')} className="group flex w-full cursor-pointer items-center justify-center gap-1.5 border-t border-white/10 pt-3 text-sm leading-5 font-medium">
-              See Results <Icon name="arrow" size={14} className="transition-transform group-hover:translate-x-0.5" />
-            </button>
-          </>
+
+      {/* key numbers band */}
+      <div aria-label={team ? 'Your teams in numbers' : 'Key numbers'} role="group" className="relative border-t border-primary-light/60 bg-card/70 px-6 py-4 backdrop-blur-sm sm:px-8">
+        {kpiErr && !loading ? (
+          <div role="alert" className="flex flex-wrap items-center gap-3 text-sm leading-5 text-body-text">
+            <Icon name="alert" size={18} color="var(--color-danger)" />
+            <span className="flex-1">Could not load the key numbers. The rest of the dashboard is up to date.</span>
+            <button type="button" onClick={onRetryKpi} className="h-9 cursor-pointer rounded-lg border border-primary bg-white px-4 text-sm font-medium text-primary hover:bg-body-bg">Try Again</button>
+          </div>
         ) : (
-          <>
-            <p className="text-xs leading-4 font-medium text-primary-light">Last Round</p>
-            <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true" className="empty-spin"><circle cx="48" cy="48" r="38" fill="none" stroke="color-mix(in srgb, var(--color-white) 25%, transparent)" strokeWidth="8" strokeDasharray="6 8" /></svg>
-            <p className="max-w-50 text-xs-plus leading-4.5 text-grey-200">The company average shows here once your first round closes.</p>
-          </>
+          <div className={`grid grid-cols-2 gap-x-6 gap-y-3 ${kpis.length === 4 ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+            {kpis.map((k) => (
+              <div key={k.label} className="flex flex-col gap-0.5">
+                <span className="text-2xs leading-3.5 font-medium tracking-wide text-light-text uppercase">{k.label}</span>
+                {loading ? (
+                  <Skel className="my-0.5 h-5 w-14" />
+                ) : (
+                  <span className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="text-lg leading-6.5 font-semibold text-heading">{k.value}</span>
+                    {k.delta != null && (
+                      <span className="inline-flex items-center gap-0.5 text-xs leading-4 font-medium" style={{ color: k.delta >= 0 ? 'var(--color-success-dark)' : 'var(--color-danger-dark)' }}>
+                        <Icon name="up" size={11} sw={2.6} className={k.delta >= 0 ? '' : 'rotate-180'} />
+                        {k.delta >= 0 ? '+' : '−'}{Math.abs(k.delta)}
+                      </span>
+                    )}
+                    <span className="text-2xs leading-3.5 text-light-text">{k.note}</span>
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
         )}
-      </TiltCard>
+      </div>
     </section>
   )
 }
