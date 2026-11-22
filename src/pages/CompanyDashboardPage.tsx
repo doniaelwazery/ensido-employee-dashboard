@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { bandOf, COMPANY, dayStr, MOVERS, TRENDS, isoToOffset, offsetToIso, USERS, type CompanyScenario, type OverdueEvaluator, type Role } from '../data/company'
 import { CountUp } from './dashboard/Hero'
-import { Dot, Icon, Ring, Skel } from './dashboard/shared'
+import { Dot, Icon, Ring, Skel, TextLink } from './dashboard/shared'
 import { Dialog, Toast } from './company/Dialog'
 import { ResultsCard } from './company/ResultsCard'
 import { dueText, RoundsCard, type RoundVM } from './company/RoundsCard'
@@ -295,7 +295,7 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
         <div role="note" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-warning-stroke bg-warning-bg px-5 py-3">
           <Icon name="info" size={18} color="var(--color-warning-fg)" />
           <p className="min-w-0 flex-1 text-sm leading-5 text-heading"><span className="font-semibold">Your trial ends in 9 days.</span> Upgrade to keep evaluating without interruption.</p>
-          <button type="button" className="h-9 cursor-pointer rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-primary-dark">Upgrade Plan</button>
+          <TextLink arrow>Upgrade Plan</TextLink>
           <button type="button" aria-label="Dismiss" onClick={onTrialClose} className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-light-text hover:bg-white/60"><Icon name="close" /></button>
         </div>
       )}
