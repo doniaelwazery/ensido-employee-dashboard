@@ -102,13 +102,13 @@ export const COMPLETED: CompletedRound[] = [
   },
   {
     id: 'q1', title: 'Q1 2026 Performance Review', short: 'Q1 2026', covered: '1 Jan 2026 – 31 Mar 2026', published: '16 Apr 2026',
-    company: { participants: 129, avg: 74.1, median: 75, high: 96, low: 28, cats: [4, 8, 30, 52, 35], units: [['Engineering', 72], ['Product', 77], ['Sales', 66], ['Customer Success', 78], ['Operations', 75], ['HR', 80], ['Finance', 71]], top: shift(TOP, -1), low5: shift(LOW, -3) },
-    team: { participants: 17, avg: 75.9, median: 76, high: 93, low: 39, cats: [1, 1, 4, 6, 5], units: [['Mobile Team', 77], ['Backend Team', 74], ['QA Team', 76]], top: shift(TEAM_TOP, -2), low5: shift(TEAM_LOW, -6) },
+    company: { participants: 129, avg: 74.1, median: 75, high: 96, low: 28, cats: [4, 8, 30, 52, 35], units: [['Engineering', 72], ['Product', 77], ['Sales', 66], ['Customer Success', 78], ['Operations', 75], ['HR', 80], ['Finance', 71]], top: shift(TOP, -1), low5: shift(LOW, 12) },
+    team: { participants: 17, avg: 75.9, median: 76, high: 93, low: 39, cats: [1, 1, 4, 6, 5], units: [['Mobile Team', 77], ['Backend Team', 74], ['QA Team', 76]], top: shift(TEAM_TOP, -2), low5: shift(TEAM_LOW, 10) },
   },
   {
     id: 'q4', title: 'Q4 2025 Performance Review', short: 'Q4 2025', covered: '1 Oct 2025 – 31 Dec 2025', published: '20 Jan 2026',
-    company: { participants: 121, avg: 73.0, median: 74, high: 95, low: 26, cats: [4, 9, 31, 48, 29], units: [['Engineering', 71], ['Product', 75], ['Sales', 66], ['Customer Success', 76], ['Operations', 74], ['HR', 79], ['Finance', 70]], top: shift(TOP, -2), low5: shift(LOW, -5) },
-    team: { participants: 16, avg: 74.0, median: 75, high: 92, low: 38, cats: [1, 2, 4, 5, 4], units: [['Mobile Team', 75], ['Backend Team', 73], ['QA Team', 74]], top: shift(TEAM_TOP, -3), low5: shift(TEAM_LOW, -7) },
+    company: { participants: 121, avg: 73.0, median: 74, high: 95, low: 26, cats: [4, 9, 31, 48, 29], units: [['Engineering', 71], ['Product', 75], ['Sales', 66], ['Customer Success', 76], ['Operations', 74], ['HR', 79], ['Finance', 70]], top: shift(TOP, -2), low5: shift(LOW, 8) },
+    team: { participants: 16, avg: 74.0, median: 75, high: 92, low: 38, cats: [1, 2, 4, 5, 4], units: [['Mobile Team', 75], ['Backend Team', 73], ['QA Team', 74]], top: shift(TEAM_TOP, -3), low5: shift(TEAM_LOW, 6) },
   },
 ]
 
@@ -142,6 +142,37 @@ export type SetupStep = { name: string; done: number; total: number }
 const STEPS = ['Organization structure', 'Job titles and levels', 'Employees', 'Competencies', 'Relations and work groups']
 const steps = (s: [number, number][]): SetupStep[] => s.map(([done, total], i) => ({ name: STEPS[i], done, total }))
 
+/* ---------- trends, movers, setup gaps, insights (PM "proposed sections") ---------- */
+
+/** last 6 completed rounds, oldest first: [label, average score, participation %] */
+export const TRENDS: { company: [string, number, number][]; team: [string, number, number][] } = {
+  company: [['Q1 2025', 70.2, 88], ['Q2 2025', 72.0, 91], ['Q3 2025', 71.1, 86], ['Q4 2025', 73.0, 93], ['Q1 2026', 74.1, 92], ['Q2 2026', 76.4, 95]],
+  team: [['Q1 2025', 72.0, 90], ['Q2 2025', 74.0, 94], ['Q3 2025', 73.0, 89], ['Q4 2025', 74.0, 94], ['Q1 2026', 75.9, 94], ['Q2 2026', 78.2, 100]],
+}
+export type Mover = { name: string; unit: string; from: number; to: number }
+export const MOVERS: { company: { up: Mover[]; down: Mover[] }; team: { up: Mover[]; down: Mover[] } } = {
+  company: {
+    up: [{ name: 'Sherif Fouad', unit: 'Engineering', from: 61, to: 74 }, { name: 'Reem Hany', unit: 'Product', from: 68, to: 79 }, { name: 'Karim Mostafa', unit: 'Engineering', from: 79, to: 88 }],
+    down: [{ name: 'Ziad Rashad', unit: 'Customer Success', from: 43, to: 31 }, { name: 'Mariam Ali', unit: 'Sales', from: 50, to: 38 }, { name: 'Tamer Saad', unit: 'Operations', from: 54, to: 42 }],
+  },
+  team: {
+    up: [{ name: 'Karim Mostafa', unit: 'Mobile Team', from: 79, to: 88 }, { name: 'Sherif Fouad', unit: 'QA Team', from: 61, to: 74 }],
+    down: [{ name: 'Youssef Nabil', unit: 'Mobile Team', from: 55, to: 45 }, { name: 'Salma Adel', unit: 'QA Team', from: 58, to: 48 }],
+  },
+}
+export type Gap = { label: string; count: string; sev: 'critical' | 'warning' | 'info'; action: string }
+const GAPS: Gap[] = [
+  { label: 'Job titles missing competencies', count: '5', sev: 'critical', action: 'Fix Job Titles' },
+  { label: 'Evaluator matrices incomplete', count: '6 of 24', sev: 'critical', action: 'Open Matrices' },
+  { label: 'Employees without a manager', count: '7', sev: 'warning', action: 'Assign Managers' },
+  { label: 'On-demand groups missing competencies', count: '3', sev: 'warning', action: 'Fix Groups' },
+  { label: 'Invitations not accepted yet', count: '12', sev: 'info', action: 'Resend Invites' },
+]
+const TEAM_JOINERS: Joiner[] = [
+  { name: 'Amr Magdy', job: 'Backend Engineer', joined: -7 },
+  { name: 'Sherif Fouad', job: 'QC Engineer', joined: -18 },
+]
+
 /* ---------- scenarios ---------- */
 
 export type CompanyData = {
@@ -157,19 +188,21 @@ export type CompanyData = {
   newJoinersDelta: number
   seats: [number, number]
   team: { members: number; delta: number; newJoiners: number }
+  teamJoiners: Joiner[]
+  gaps: Gap[]
 }
 
 const FULL_SETUP = steps([[3, 3], [3, 3], [2, 2], [4, 4], [4, 4]])
 const MOST_SETUP = steps([[3, 3], [3, 3], [2, 2], [4, 4], [2, 4]])
-const base = { completed: COMPLETED, setup: MOST_SETUP, joiners: JOINERS, overdue: OVERDUE, employees: 248, employeesDelta: 12, completedCount: 11, newJoiners: 14, newJoinersDelta: -3, seats: [248, 250] as [number, number], team: { members: 18, delta: 2, newJoiners: 2 } }
+const base = { completed: COMPLETED, setup: MOST_SETUP, joiners: JOINERS, overdue: OVERDUE, employees: 248, employeesDelta: 12, completedCount: 11, newJoiners: 14, newJoinersDelta: -3, seats: [248, 250] as [number, number], team: { members: 18, delta: 2, newJoiners: 2 }, teamJoiners: TEAM_JOINERS, gaps: GAPS }
 
 export const COMPANY: Record<CompanyScenario, CompanyData> = {
   typical: { ...base, rounds: [R.sales, R.eng360, R.q3] },
-  busy: { ...base, setup: FULL_SETUP, rounds: [R.sales, R.eng360, R.q3, R.probation, R.hiring, R.lead180, R.cs, R.ops] },
+  busy: { ...base, setup: FULL_SETUP, gaps: GAPS.slice(4), rounds: [R.sales, R.eng360, R.q3, R.probation, R.hiring, R.lead180, R.cs, R.ops] },
   one: { ...base, rounds: [R.q3], overdue: OVERDUE.filter((o) => o.rounds.includes('q3')).map((o) => ({ ...o, rounds: ['q3'], since: -6 })) },
   none: { ...base, rounds: [], overdue: [] },
   first: { ...base, rounds: [R.q3], completed: [], completedCount: 0, overdue: OVERDUE.filter((o) => o.rounds.includes('q3')).map((o) => ({ ...o, rounds: ['q3'], since: -6 })) },
-  new: { ...base, rounds: [], completed: [], setup: steps([[3, 3], [1, 3], [0, 2], [0, 4], [0, 4]]), joiners: [], overdue: [], employees: 1, employeesDelta: 0, completedCount: 0, newJoiners: 1, newJoinersDelta: 0, seats: [1, 50] },
+  new: { ...base, rounds: [], completed: [], setup: steps([[3, 3], [1, 3], [0, 2], [0, 4], [0, 4]]), joiners: [], teamJoiners: [], gaps: [], overdue: [], employees: 1, employeesDelta: 0, completedCount: 0, newJoiners: 1, newJoinersDelta: 0, seats: [1, 50] },
 }
 
 export const unitCompletion = (roundId: string, team: boolean) => {

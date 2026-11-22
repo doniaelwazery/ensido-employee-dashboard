@@ -1,12 +1,13 @@
 import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { bandOf, COMPANY, dayStr, isoToOffset, offsetToIso, USERS, type CompanyScenario, type OverdueEvaluator, type Role } from '../data/company'
+import { bandOf, COMPANY, dayStr, MOVERS, TRENDS, isoToOffset, offsetToIso, USERS, type CompanyScenario, type OverdueEvaluator, type Role } from '../data/company'
 import { CountUp } from './dashboard/Hero'
 import { Dot, Icon, Ring, Skel } from './dashboard/shared'
 import { Dialog, Toast } from './company/Dialog'
 import { ResultsCard } from './company/ResultsCard'
 import { dueText, RoundsCard, type RoundVM } from './company/RoundsCard'
 import { AttentionCard, CompletionCard, JoinersCard, OverdueCard, SetupCard, type AttentionItem } from './company/SideCards'
+import { AiInsightsCard, GapsCard, MoversCard, TrendsCard, type Insight } from './company/InsightCards'
 
 // Company Dashboard for Super Admins (whole company) and Managers (their teams only).
 // Finalized from the PM draft (Claude canvas "Ensido Dashboards › Company Dashboard"), in the My Dashboard style.
@@ -184,6 +185,24 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
     end: (r: RoundVM) => setModal({ type: 'end', r }),
     cancel: (r: RoundVM) => setModal({ type: 'cancel', r }),
   }
+  /* ---------- ensidoMate insights (generated in production; sample sentences here) ---------- */
+  const insights: Insight[] = []
+  if (scenario !== 'new') {
+    const hasQ3 = rounds.some((r) => r.id === 'q3')
+    const has360 = rounds.some((r) => r.id === 'eng360')
+    if (team) {
+      if (has360) insights.push({ tone: 'critical', text: 'Backend Team has submitted the fewest forms in Engineering 360 Feedback, and it closes in 2 days.', link: 'See pending evaluators', target: 'co-evaluators' })
+      if (latest) insights.push({ tone: 'good', text: `Mobile Team has the highest average of your teams (80%) in ${latest.short}.`, link: 'Open results by team', target: 'co-results' })
+      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: `Youssef Nabil and Salma Adel both dropped about 10 points since ${d.completed[1].short}.`, link: 'Review biggest movers', target: 'co-movers' })
+    } else {
+      if (hasQ3) insights.push({ tone: 'critical', text: 'Engineering is 12 points behind the company in Q3 2026 Performance Review completion. 3 evaluators hold 21 of its pending forms.', link: 'See pending evaluators', target: 'co-evaluators' })
+      else if (latest) insights.push({ tone: 'good', text: `${latest.short} closed with 95% participation, the highest in the last six rounds.`, link: 'Open trends', target: 'co-trends' })
+      if (latest) insights.push({ tone: 'good', text: `Customer Success has the highest department average (81%) in ${latest.short}, up 3 points.`, link: 'Open results by department', target: 'co-results' })
+      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: '3 employees declined two rounds in a row, and all three report to the same manager.', link: 'Review biggest movers', target: 'co-movers' })
+      if (!latest && first) insights.push({ tone: 'warning', text: `Your first results arrive when ${first.title} closes on ${first.deadline}. ${first.pct}% of forms are in so far.`, link: 'Open the round', target: 'co-rounds' })
+    }
+  }
+
   const dateOff = date ? isoToOffset(date) : NaN
   const dateOk = Number.isFinite(dateOff) && dateOff >= 1
 
@@ -220,20 +239,30 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
         <AttentionCard items={items} loading={loading} />
       </div>
 
-      <div className={`grid grid-cols-1 items-start gap-6 ${admin ? 'xl:grid-cols-[minmax(0,1.79fr)_minmax(0,1fr)]' : ''}`}>
+      {!loading && insights.length > 0 && (
+        <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} />
+      )}
+
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.79fr)_minmax(0,1fr)]">
         <ResultsCard rounds={d.completed} team={team} loading={loading} error={resErr} onRetry={() => setFixed((f) => ({ ...f, res: true }))} />
-        {admin && (
-          <div className="flex min-w-0 flex-col gap-6">
-            {!loading && setupOpen && !setupHidden && <SetupCard steps={d.setup} canHide={scenario !== 'new'} onHide={() => setSetupHidden(true)} />}
-            {!loading && setupOpen && setupHidden && (
-              <button type="button" onClick={() => setSetupHidden(false)} className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary-light bg-row-hover px-5 py-3.5 text-sm leading-5 font-medium text-primary hover:bg-primary-lighter">
-                Continue Setup ({setupDone} of {d.setup.length}) <Icon name="arrow" size={14} />
-              </button>
-            )}
-            <JoinersCard joiners={d.joiners} loading={loading} admin={admin} you={user} />
-          </div>
-        )}
+        <div className="flex min-w-0 flex-col gap-6">
+          {admin && !loading && setupOpen && !setupHidden && <SetupCard steps={d.setup} canHide={scenario !== 'new'} onHide={() => setSetupHidden(true)} />}
+          {admin && !loading && setupOpen && setupHidden && (
+            <button type="button" onClick={() => setSetupHidden(false)} className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary-light bg-row-hover px-5 py-3.5 text-sm leading-5 font-medium text-primary hover:bg-primary-lighter">
+              Continue Setup ({setupDone} of {d.setup.length}) <Icon name="arrow" size={14} />
+            </button>
+          )}
+          <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} />
+          {admin && !loading && scenario !== 'new' && <GapsCard gaps={d.gaps} />}
+        </div>
       </div>
+
+      {!loading && scenario !== 'new' && (
+        <div className={`grid grid-cols-1 items-start gap-6 ${d.completed.length >= 2 ? 'xl:grid-cols-2' : ''}`}>
+          <TrendsCard rows={d.completed.length >= 2 ? (team ? TRENDS.team : TRENDS.company) : []} team={team} />
+          {d.completed.length >= 2 && <MoversCard up={(team ? MOVERS.team : MOVERS.company).up} down={(team ? MOVERS.team : MOVERS.company).down} from={d.completed[1].short} to={d.completed[0].short} />}
+        </div>
+      )}
 
       {!loading && rounds.length > 0 && (
         <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">

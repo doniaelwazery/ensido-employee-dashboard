@@ -123,3 +123,41 @@ animation is off and final values show immediately. The tilt card and cursor eff
 Deploying from outside git matters: from inside the repo the Vercel CLI attaches the last commit's author, and Vercel
 **blocks** the deploy if that email isn't a member of the ensido team (status "Blocked", CLI appears to hang). Use `npm run deploy -- --preview` for a throw-away
 preview URL. The live link is public; ask the design owner before sharing further.
+
+## Company Dashboard (Super Admin + Manager)
+
+Finalized from the PM draft ("Ensido Dashboards › Company Dashboard"). Managers and Super Admins switch between
+**My Dashboard** (the employee dashboard above, unchanged) and **Company Dashboard** with the DS underline tabs.
+Employees never see the tabs.
+
+- **Live:** `/?role=admin&view=company` · `/?role=manager&view=company` · add `&theme=dark` · `&scenario=…`
+- **Code:** `src/pages/CompanyDashboardPage.tsx` (page, rules, dialogs) · `src/pages/company/*` (cards) ·
+  `src/data/company.ts` (all sample data + types, `BANDS` = round-result score bands)
+
+### Sections (top to bottom)
+| Section | Super Admin | Manager |
+|---|---|---|
+| Trial banner (dismissible) | when on trial | — |
+| Company header: name, status line, 4 tiles, key numbers band | whole company | "Your Teams", team numbers |
+| Active Evaluation Rounds: spotlight + list, View All Rounds | Remind, ⋯ Edit Deadline / End / Cancel, Extend Deadline, End and Publish | Remind only; rounds without their teams are hidden |
+| Needs Your Attention (rules in `items`) | overdue, closing <3 days & <80%, all submitted, low scores, seats ≥90%, setup, no people, idle | overdue, closing soon, low scores |
+| ensidoMate Insights (Beta) | 1–3 insights, each links to a section | team insights |
+| Latest Round Results: picker, published notice, bands / by department, Top Performers + Need Attention | company | team |
+| Finish Setting Up (Hide for Now → "Continue Setup" link), Setup Gaps | ✓ | — |
+| Recently Joined | company | their teams |
+| Trends Across Rounds (needs ≥2 rounds) + Biggest Movers | ✓ | ✓ team |
+| Evaluators With Most Pending Forms (Remind / Remind All) + Completion by Department/Team | ✓ | ✓ team |
+
+### Cases (Prototype › Scenarios)
+Typical (3 rounds, 1 overdue) · Heavy Use (8 rounds, long names, setup complete) · One Round · No Active Rounds ·
+First Round (no results yet) · New Company (Super Admin only: empty states, setup 1/5, trial) · Loading ·
+Key numbers + results fail (Try Again) · Trial banner · Light / Dark / System theme.
+
+### Score bands (same as evaluation round results)
+Unsatisfactory 0–34 `#ed1d4e` · Developing 35–49 `#d97706` · Solid Performance 50–64 `#2563eb` · Strong 65–79 `#00b2a1` ·
+Outstanding 80–100 `#06a700`. "Need attention" = below 50%.
+
+### API needs beyond today's endpoints (PM marked as Phase 2)
+New joiners (30 days) and active-employee delta · trends for the last 6 rounds (avg score + participation) ·
+per-employee score change between rounds (Biggest Movers) · completion per department/team per round ·
+pending forms per evaluator · setup-gap counts · AI insights.

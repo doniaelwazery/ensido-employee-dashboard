@@ -23,6 +23,7 @@ export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
 export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds: CompletedRound[]; team: boolean; loading: boolean; error: boolean; onRetry: () => void }) {
   const [idx, setIdx] = useState(0)
   const [view, setView] = useState<'cats' | 'units'>('cats')
+  const [readySeen, setReadySeen] = useState(false)
   const round = rounds[Math.min(idx, rounds.length - 1)]
   const prev = rounds[Math.min(idx, rounds.length - 1) + 1]
   const s = round ? (team ? round.team : round.company) : null
@@ -62,6 +63,13 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
         <Empty icon="chart" title="No Completed Rounds Yet" text="When your first round closes, its score bands, department averages and top performers appear here." />
       ) : (
         <div className="flex flex-col gap-5">
+          {idx === 0 && !readySeen && (
+            <div role="status" className="flex items-center gap-3 rounded-lg border border-success-stroke bg-success-bg px-4 py-2.5 text-sm leading-5 text-success-dark">
+              <Icon name="check" size={16} sw={2.6} color="var(--color-success)" />
+              <span className="flex-1">Results for {round.title} are published and shared with employees.</span>
+              <button type="button" aria-label="Dismiss" onClick={() => setReadySeen(true)} className="flex size-7 cursor-pointer items-center justify-center rounded-md hover:bg-white/60"><Icon name="close" size={14} /></button>
+            </div>
+          )}
           <div className="flex min-w-0 flex-col gap-4 rounded-xl border border-grey-200 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="text-sm leading-5 font-semibold text-heading">{view === 'cats' ? 'Score Bands' : `Average Score by ${unitWord}`}</span>

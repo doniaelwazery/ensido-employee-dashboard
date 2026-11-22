@@ -50,10 +50,14 @@ export function RoundsCard({ rounds, loading, admin, team, actions }: { rounds: 
           </span>
         </div>
         {!loading && rounds.length > 0 && (
-          <span className="flex flex-col items-end">
-            <span className="text-sm leading-4.5 font-bold text-heading">{fmt(subTotal)} / {fmt(formsTotal)}</span>
-            <span className="text-2xs leading-3.5 text-light-text">forms submitted</span>
-          </span>
+          <div className="flex items-center gap-5">
+            <span className="flex flex-col items-end">
+              <span className="text-sm leading-4.5 font-bold text-heading">{fmt(subTotal)} / {fmt(formsTotal)}</span>
+              <span className="text-2xs leading-3.5 text-light-text">forms submitted</span>
+            </span>
+            <span aria-hidden="true" className="h-8 w-px bg-primary-lighter" />
+            <TextLink arrow>View All Rounds</TextLink>
+          </div>
         )}
       </div>
 
