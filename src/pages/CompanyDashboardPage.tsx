@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react'
 import { category } from '../data/dashboard'
 import { COMPANY, dayStr, isoToOffset, offsetToIso, USERS, type CompanyScenario, type OverdueEvaluator, type Role } from '../data/company'
@@ -415,6 +416,7 @@ function CompanyControls({ role, rolePicker, scenario, setScenario, loading, rel
   const [open, setOpen] = useState(false)
   const opts = SCENARIOS.filter(([s]) => role === 'admin' || s !== 'new')
   return (
+    createPortal(
     <div role="region" aria-label="Prototype controls" className="fixed right-4 bottom-4 z-40 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-2">
       {open && (
         <div className="menu-in flex w-92 max-w-full flex-col items-start gap-3 rounded-lg bg-secondary p-4 text-sm leading-5 text-white shadow-tooltip">
@@ -444,7 +446,9 @@ function CompanyControls({ role, rolePicker, scenario, setScenario, loading, rel
         <span className="rounded bg-primary-dark px-2 py-0.5 text-xs leading-4">Prototype</span>
         {open ? 'Hide' : 'Scenarios'}
       </button>
-    </div>
+    </div>,
+    document.body,
+    )
   )
 }
 

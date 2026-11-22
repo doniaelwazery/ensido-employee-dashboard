@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { useState, type ReactNode } from 'react'
 import { type Scenario } from '../../data/dashboard'
 
@@ -7,6 +8,7 @@ export function Controls({ rolePicker, scenario, setScenario, loading, reload, f
   const opts: [Scenario, string][] = [['typical', 'Typical'], ['new', 'New Employee'], ['busy', 'Heavy Use'], ['first', 'First Round']]
   const [open, setOpen] = useState(false)
   return (
+    createPortal(
     <div role="region" aria-label="Prototype controls" className="fixed right-4 bottom-4 z-40 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-2">
       {open && (
       <div className="menu-in flex w-85 max-w-full flex-col items-start gap-3 rounded-lg bg-secondary p-4 text-sm leading-5 text-white shadow-tooltip">
@@ -36,6 +38,8 @@ export function Controls({ rolePicker, scenario, setScenario, loading, reload, f
         <span className="rounded bg-primary-dark px-2 py-0.5 text-xs leading-4">Prototype</span>
         {open ? 'Hide' : 'Scenarios'}
       </button>
-    </div>
+    </div>,
+    document.body,
+    )
   )
 }
