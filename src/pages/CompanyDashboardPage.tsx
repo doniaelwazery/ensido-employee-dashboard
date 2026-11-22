@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { bandOf, COMPANY, dayStr, MOVERS, TRENDS, isoToOffset, offsetToIso, USERS, type CompanyScenario, type OverdueEvaluator, type Role } from '../data/company'
 import { CountUp } from './dashboard/Hero'
 import { Dot, Icon, Ring, Skel } from './dashboard/shared'
@@ -130,7 +130,72 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
   const rank = { critical: 0, warning: 1, info: 2 }
   items.sort((a, b) => rank[a.sev] - rank[b.sev])
 
-  /* ---------- hero ---------- */
+  /* ---------- two balanced columns ----------
+   Main (wide) + side columns that stack cards without gaps and share the same widths on every row. Pinned cards keep
+   their column; "float" cards (joiners, trends, movers, completion) go wherever the two columns end up most even —
+   measured in the browser before paint. The last card of each column stretches, so both columns end on one line.
+   Below xl the columns dissolve (display: contents) and cards follow the priority order of the list. */
+type ColCard = { id: string; col: 'main' | 'side' | 'float'; node: ReactNode }
+const ORD = ['order-1', 'order-2', 'order-3', 'order-4', 'order-5', 'order-6', 'order-7', 'order-8', 'order-9', 'order-10', 'order-11', 'order-12']
+function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }) {
+  const live = cards.map((c, i) => ({ ...c, order: i })).filter((c) => c.node)
+  const ref = useRef<HTMLDivElement>(null)
+  const [place, setPlace] = useState<Record<string, 'main' | 'side'>>({})
+  const [measuring, setMeasuring] = useState(true)
+  const [width, setWidth] = useState(() => window.innerWidth)
+  useEffect(() => {
+    let t = 0
+    const on = () => {
+      window.clearTimeout(t)
+      t = window.setTimeout(() => setWidth(window.innerWidth), 150)
+    }
+    window.addEventListener('resize', on)
+    return () => window.removeEventListener('resize', on)
+  }, [])
+  useLayoutEffect(() => setMeasuring(true), [balanceKey, width])
+  useLayoutEffect(() => {
+    if (!measuring) return
+    const el = ref.current
+    if (!el || !matchMedia('(min-width: 1280px)').matches) return setMeasuring(false)
+    const h: Record<string, number> = {}
+    el.querySelectorAll<HTMLElement>('[data-card]').forEach((n) => (h[n.dataset.card!] = n.getBoundingClientRect().height))
+    const GAP = 24
+    const total = (ids: string[]) => ids.reduce((s, id) => s + (h[id] ?? 0) + GAP, 0)
+    const fixedMain = total(live.filter((c) => c.col === 'main').map((c) => c.id))
+    const fixedSide = total(live.filter((c) => c.col === 'side').map((c) => c.id))
+    const floats = live.filter((c) => c.col === 'float').map((c) => c.id)
+    let best: Record<string, 'main' | 'side'> = {}
+    let bestDiff = Infinity
+    for (let m = 0; m < 1 << floats.length; m++) {
+      const pick: Record<string, 'main' | 'side'> = {}
+      floats.forEach((id, i) => (pick[id] = m & (1 << i) ? 'main' : 'side'))
+      const diff = Math.abs(fixedMain + total(floats.filter((id) => pick[id] === 'main')) - fixedSide - total(floats.filter((id) => pick[id] === 'side')))
+      if (diff < bestDiff - 1) {
+        bestDiff = diff
+        best = pick
+      }
+    }
+    setPlace(best)
+    setMeasuring(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [measuring])
+
+  const colOf = (c: (typeof live)[number]) => (c.col === 'float' ? (place[c.id] ?? 'side') : c.col)
+  const wrap = (c: (typeof live)[number]) => (
+    <div key={c.id} data-card={c.id} className={`${ORD[c.order]} flex min-w-0 flex-col *:flex-1 xl:order-none`}>
+      {c.node}
+    </div>
+  )
+  const col = `contents xl:flex xl:min-w-0 xl:flex-col xl:gap-6 ${measuring ? '' : 'xl:[&>*:last-child]:flex-1'}`
+  return (
+    <div ref={ref} className={`flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1.79fr)_minmax(0,1fr)] ${measuring ? 'xl:items-start' : 'xl:items-stretch'}`}>
+      <div className={col}>{live.filter((c) => colOf(c) === 'main').map(wrap)}</div>
+      <div className={col}>{live.filter((c) => colOf(c) === 'side').map(wrap)}</div>
+    </div>
+  )
+}
+
+/* ---------- hero ---------- */
   const formsTotal = rounds.reduce((s, r) => s + r.forms, 0)
   const subTotal = rounds.reduce((s, r) => s + r.submitted, 0)
   const pctAll = formsTotal ? Math.round((subTotal / formsTotal) * 100) : 0
@@ -237,41 +302,29 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
       {/* Two independent columns (main + side) with the same widths everywhere, so cards stack without gaps and the
           gutters line up; the last card of each column stretches so both columns end on one line. Below xl the
           column wrappers dissolve (display: contents) and every card falls into one column in priority order. */}
-      {(() => {
-        const ORD = ['order-1', 'order-2', 'order-3', 'order-4', 'order-5', 'order-6', 'order-7', 'order-8', 'order-9', 'order-10', 'order-11', 'order-12']
-        const slot = (o: number, node: ReactNode) => (node ? <div key={o} className={`${ORD[o - 1]} flex min-w-0 flex-col *:flex-1 xl:order-none`}>{node}</div> : null)
-        const hasTrends = !loading && scenario !== 'new'
-        const hasMovers = !loading && d.completed.length >= 2
-        const rs = rounds.filter((r) => r.pending > 0).length ? rounds.filter((r) => r.pending > 0) : rounds
-        const s = {
-          rounds: slot(1, <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} />),
-          attention: slot(2, <AttentionCard items={items} loading={loading} />),
-          insights: slot(3, !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} />),
-          results: slot(4, <ResultsCard rounds={d.completed} team={team} loading={loading} error={resErr} onRetry={() => setFixed((f) => ({ ...f, res: true }))} />),
-          setup: slot(5, admin && !loading && setupOpen && !setupHidden && <SetupCard steps={d.setup} canHide={scenario !== 'new'} onHide={() => setSetupHidden(true)} />),
-          setupLink: slot(6, admin && !loading && setupOpen && setupHidden && (
-            <button type="button" onClick={() => setSetupHidden(false)} className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary-light bg-row-hover px-5 py-3.5 text-sm leading-5 font-medium text-primary hover:bg-primary-lighter">
-              Continue Setup ({setupDone} of {d.setup.length}) <Icon name="arrow" size={14} />
-            </button>
-          )),
-          joiners: slot(7, <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} />),
-          gaps: slot(8, admin && !loading && scenario !== 'new' && <GapsCard gaps={d.gaps} />),
-          trends: slot(9, hasTrends && <TrendsCard rows={d.completed.length >= 2 ? (team ? TRENDS.team : TRENDS.company) : []} team={team} />),
-          movers: slot(10, hasMovers && <MoversCard up={(team ? MOVERS.team : MOVERS.company).up} down={(team ? MOVERS.team : MOVERS.company).down} from={d.completed[1].short} to={d.completed[0].short} />),
-          evaluators: slot(11, !loading && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} />),
-          completion: slot(12, !loading && rounds.length > 0 && <CompletionCard key={rounds.map((r) => r.id).join()} rounds={rs} team={team} />),
-        }
-        // balanced per role: managers have shorter side cards, so Trends moves to the side column for them
-        const main = team ? [s.rounds, s.insights, s.results, s.evaluators] : [s.rounds, s.insights, s.results, s.trends, s.evaluators]
-        const side = team ? [s.attention, s.joiners, s.trends, s.movers, s.completion] : [s.attention, s.setup, s.setupLink, s.joiners, s.gaps, s.movers, s.completion]
-        const col = 'contents xl:flex xl:min-w-0 xl:flex-col xl:gap-6 xl:[&>*:last-child]:flex-1'
-        return (
-          <div className="flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1.79fr)_minmax(0,1fr)] xl:items-stretch">
-            <div className={col}>{main}</div>
-            <div className={col}>{side}</div>
-          </div>
-        )
-      })()}
+      <Columns
+        balanceKey={`${scenario}-${role}-${loading}-${rounds.length}-${insights.length}-${setupOpen}-${setupHidden}`}
+        cards={[
+          { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} /> },
+          { id: 'attention', col: 'side', node: <AttentionCard items={items} loading={loading} /> },
+          { id: 'insights', col: 'main', node: !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} /> },
+          { id: 'results', col: 'main', node: <ResultsCard rounds={d.completed} team={team} loading={loading} error={resErr} onRetry={() => setFixed((f) => ({ ...f, res: true }))} /> },
+          { id: 'setup', col: 'side', node: admin && !loading && setupOpen && !setupHidden && <SetupCard steps={d.setup} canHide={scenario !== 'new'} onHide={() => setSetupHidden(true)} /> },
+          {
+            id: 'setupLink', col: 'side', node: admin && !loading && setupOpen && setupHidden && (
+              <button type="button" onClick={() => setSetupHidden(false)} className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary-light bg-row-hover px-5 py-3.5 text-sm leading-5 font-medium text-primary hover:bg-primary-lighter">
+                Continue Setup ({setupDone} of {d.setup.length}) <Icon name="arrow" size={14} />
+              </button>
+            ),
+          },
+          { id: 'joiners', col: 'float', node: <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} /> },
+          { id: 'gaps', col: 'side', node: admin && !loading && scenario !== 'new' && <GapsCard gaps={d.gaps} /> },
+          { id: 'trends', col: 'float', node: !loading && scenario !== 'new' && <TrendsCard rows={d.completed.length >= 2 ? (team ? TRENDS.team : TRENDS.company) : []} team={team} /> },
+          { id: 'movers', col: 'float', node: !loading && d.completed.length >= 2 && <MoversCard up={(team ? MOVERS.team : MOVERS.company).up} down={(team ? MOVERS.team : MOVERS.company).down} from={d.completed[1].short} to={d.completed[0].short} /> },
+          { id: 'evaluators', col: 'main', node: !loading && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} /> },
+          { id: 'completion', col: 'float', node: !loading && rounds.length > 0 && <CompletionCard key={rounds.map((r) => r.id).join()} rounds={rounds.filter((r) => r.pending > 0).length ? rounds.filter((r) => r.pending > 0) : rounds} team={team} /> },
+        ]}
+      />
 
       {/* ---------- dialogs ---------- */}
       {modal?.type === 'remind' && (
