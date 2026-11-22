@@ -69,7 +69,7 @@ export default function App() {
   // Ensido DS tabs (same as the manager dashboard in Figma): underline row, 4px primary bar on the active tab
   const tabs =
     role === 'employee' ? undefined : (
-      <div role="tablist" aria-label="Dashboards" className="mb-6 flex overflow-x-auto border-b border-grey-200">
+      <div role="tablist" aria-label="Dashboards" className="mb-6 flex border-b border-grey-200">
         {([['my', 'My Dashboard'], ['company', 'Company Dashboard']] as const).map(([v, l]) => {
           const on = view === v
           return (
