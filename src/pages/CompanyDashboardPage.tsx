@@ -7,7 +7,7 @@ import { Dialog, Toast } from './company/Dialog'
 import { ResultsCard } from './company/ResultsCard'
 import { dueText, RoundsCard, type RoundVM } from './company/RoundsCard'
 import { AttentionCard, CompletionCard, JoinersCard, OverdueCard, SetupCard, type AttentionItem } from './company/SideCards'
-import { AiInsightsCard, GapsCard, MoversCard, TrendsCard, type Insight } from './company/InsightCards'
+import { AiInsightsCard, GapsCard, MoversCard, QuickActionsCard, TrendsCard, type Insight, type QuickAction } from './company/InsightCards'
 
 // Company Dashboard for Super Admins (whole company) and Managers (their teams only).
 // Finalized from the PM draft (Claude canvas "Ensido Dashboards › Company Dashboard"), in the My Dashboard style.
@@ -151,6 +151,23 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose, lean }: { s
 type ColCard = { id: string; col: 'main' | 'side' | 'float'; node: ReactNode }
 /** chart cards whose chart grows to absorb leftover height; they go last in their column */
 const ELASTIC = ['trends', 'completion']
+/** cards that can take a column's leftover height, in this order, each only up to what it can use:
+    the attention list (until every item shows), then the charts (until their max height) */
+const GROW = ['attention', ...ELASTIC, 'results']
+/** how much taller a card can get without showing empty space inside it */
+function capacity(n: HTMLElement): number {
+  const id = n.dataset.card!
+  if (id === 'attention') {
+    const l = n.querySelector<HTMLElement>('[role=list]')
+    return l ? Math.max(0, l.scrollHeight - l.clientHeight) : 0
+  }
+  const chart = n.querySelector<HTMLElement>('[data-chart]')
+  if (!chart) return 0
+  const max = parseFloat(getComputedStyle(chart).maxHeight)
+  return Number.isFinite(max) ? Math.max(0, max - chart.getBoundingClientRect().height) : 160
+}
+/** small cards that always close their column, under the elastic chart */
+const TAIL = ['quick']
 const ORD = ['order-1', 'order-2', 'order-3', 'order-4', 'order-5', 'order-6', 'order-7', 'order-8', 'order-9', 'order-10', 'order-11', 'order-12']
 function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }) {
   const live = cards.map((c, i) => ({ ...c, order: i })).filter((c) => c.node)
@@ -160,6 +177,7 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
   const [phase, setPhase] = useState<'side' | 'main' | 'done'>('side')
   const measuring = phase !== 'done'
   const hSide = useRef<Record<string, number>>({})
+  const cap = useRef<Record<string, number>>({})
   const [width, setWidth] = useState(() => window.innerWidth)
   useEffect(() => {
     let t = 0
@@ -174,13 +192,21 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
   useLayoutEffect(() => {
     if (phase === 'done') return
     const el = ref.current
+    el?.querySelectorAll<HTMLElement>('[data-card]').forEach((n) => {
+      n.style.height = ''
+      n.style.flexGrow = ''
+      delete n.dataset.grow
+    })
     if (!el || !matchMedia('(min-width: 1280px)').matches) return setPhase('done')
     const h: Record<string, number> = {}
     el.querySelectorAll<HTMLElement>('[data-card]').forEach((n) => (h[n.dataset.card!] = n.getBoundingClientRect().height))
     if (phase === 'side') {
       hSide.current = h
+      cap.current = {}
+      el.querySelectorAll<HTMLElement>('[data-card]').forEach((n) => (cap.current[n.dataset.card!] = capacity(n)))
       return setPhase('main')
     }
+
     const hMain = h // floats measured at main width now; pinned cards are the same in both passes
     const GAP = 24
     const height = (id: string, col: 'main' | 'side') => (col === 'main' ? hMain[id] : hSide.current[id]) ?? 0
@@ -195,9 +221,9 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
       const mainH = sum('main')
       const sideH = sum('side')
       const shorter = mainH < sideH ? 'main' : 'side'
-      // a column holding a chart card ends with it (see arrange), and that chart can grow up to ~150px
-      const elasticEnd = live.some((c) => colOfId(c) === shorter && ELASTIC.includes(c.id))
-      const cost = Math.max(0, Math.abs(mainH - sideH) - (elasticEnd ? 150 : 0)) + (pick.insights === 'side' ? 200 : 0)
+      // the shorter column's growable cards absorb part of the difference; what is left shows as empty space
+      const absorb = live.filter((c) => colOfId(c) === shorter && GROW.includes(c.id)).reduce((s, c) => s + (cap.current[c.id] ?? 0), 0)
+      const cost = Math.max(0, Math.abs(mainH - sideH) - absorb) + (pick.insights === 'side' ? 200 : 0) + (pick.evaluators === 'side' ? 120 : 0)
       if (cost < bestCost - 1) {
         bestCost = cost
         best = pick
@@ -208,18 +234,45 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
-  const arrange = (list: typeof live) => [...list.filter((c) => !ELASTIC.includes(c.id)), ...list.filter((c) => ELASTIC.includes(c.id))]
+  // once placed: hand each column's leftover height to its growable cards, each only as much as it can use;
+  // anything still left goes to the last card so both columns end on one line
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (phase !== 'done' || !el || !matchMedia('(min-width: 1280px)').matches) return
+    for (const colEl of Array.from(el.children) as HTMLElement[]) {
+      const kids = Array.from(colEl.children) as HTMLElement[]
+      if (!kids.length) continue
+      const used = kids.reduce((s, k) => s + k.getBoundingClientRect().height, 0) + 24 * (kids.length - 1)
+      let left = colEl.getBoundingClientRect().height - used
+      for (const k of kids) {
+        if (left < 1 || !GROW.includes(k.dataset.card!)) continue
+        const extra = Math.min(left, capacity(k))
+        if (extra < 1) continue
+        k.style.height = `${k.getBoundingClientRect().height + extra}px`
+        k.dataset.grow = ''
+        left -= extra
+      }
+      if (left >= 1) {
+        const last = kids[kids.length - 1]
+        last.style.flexGrow = '1'
+        last.dataset.grow = ''
+      }
+    }
+  })
+
+  const arrange = (list: typeof live) => [...list.filter((c) => !ELASTIC.includes(c.id) && !TAIL.includes(c.id)), ...list.filter((c) => ELASTIC.includes(c.id)), ...list.filter((c) => TAIL.includes(c.id))]
   const colOf = (c: (typeof live)[number]) => (c.col === 'float' ? (phase === 'side' ? 'side' : phase === 'main' ? 'main' : (place[c.id] ?? 'side')) : c.col)
   const wrap = (c: (typeof live)[number]) => (
     <div key={c.id} data-card={c.id} className={`${ORD[c.order]} flex min-w-0 flex-col *:flex-1 xl:order-none`}>
       {c.node}
     </div>
   )
-  const col = `contents xl:flex xl:min-w-0 xl:flex-col xl:gap-6 ${measuring ? '' : 'xl:[&>*:last-child]:flex-1'}`
+  const col = 'contents xl:flex xl:min-w-0 xl:flex-col xl:gap-6'
+  const render = (list: typeof live) => arrange(list).map(wrap)
   return (
     <div ref={ref} className={`flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1.79fr)_minmax(0,1fr)] ${measuring ? 'xl:items-start' : 'xl:items-stretch'}`}>
-      <div className={col}>{arrange(live.filter((c) => colOf(c) === 'main')).map(wrap)}</div>
-      <div className={col}>{arrange(live.filter((c) => colOf(c) === 'side')).map(wrap)}</div>
+      <div className={col}>{render(live.filter((c) => colOf(c) === 'main'))}</div>
+      <div className={col}>{render(live.filter((c) => colOf(c) === 'side'))}</div>
     </div>
   )
 }
@@ -298,6 +351,20 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
     }
   }
 
+  const quick: QuickAction[] = team
+    ? [
+        { icon: 'bell', label: 'Remind Evaluators', hint: 'Pending forms in your teams', onClick: () => jump(rounds.length ? 'co-evaluators' : 'co-rounds') },
+        { icon: 'target', label: 'Set a Team Goal', hint: 'Team Goals', onClick: () => {} },
+        { icon: 'chart', label: 'Team Results', hint: 'Latest round by team', onClick: () => jump('co-results') },
+        { icon: 'people', label: 'My Team', hint: `${d.team.members} members`, onClick: () => {} },
+      ]
+    : [
+        { icon: 'people', label: 'Add Employees', hint: `${fmt(d.seats[1] - d.seats[0])} seats left`, onClick: () => {} },
+        { icon: 'clip', label: 'Evaluator Matrices', hint: 'Who evaluates whom', onClick: () => {} },
+        { icon: 'target', label: 'Team Goals', hint: 'Set and track goals', onClick: () => {} },
+        { icon: 'policy', label: 'Policies', hint: 'Company policies', onClick: () => {} },
+      ]
+
   const dateOff = date ? isoToOffset(date) : NaN
   const dateOk = Number.isFinite(dateOff) && dateOff >= 1
 
@@ -316,7 +383,7 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
 
       <CompanyHero
         team={team}
-        title={team ? 'Your Teams' : 'Acme Corporation'}
+        title={team ? 'Your Teams' : 'Trianglz'}
         subtitle={team ? 'Engineering · Mobile, Backend and QA teams · 18 employees' : `Company overview · ${fmt(d.employees)} employee${d.employees === 1 ? '' : 's'}${lean ? ` · ${fmt(d.seats[0])} of ${fmt(d.seats[1])} seats used` : ''}`}
         summary={summary}
         urgent={items.some((i) => i.sev === 'critical')}
@@ -333,13 +400,14 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
           gutters line up; the last card of each column stretches so both columns end on one line. Below xl the
           column wrappers dissolve (display: contents) and every card falls into one column in priority order. */}
       {/* Proposed layout (UX review): every section has a fixed place, ordered by the job it does.
-          Main: act on running rounds (rounds → who is late) then see how it went (results).
+          Main: running rounds, ensidoMate insights right under them, who is late, then how it went (results).
           Side: what needs you (attention, setup) then context (insights, trends; recent joiners for managers). */}
       <Columns
         balanceKey={`${scenario}-${role}-${loading}-${rounds.length}-${insights.length}-${setupOpen}-${setupHidden}-${lean}`}
         cards={lean ? [
           { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} /> },
           { id: 'attention', col: 'side', node: <AttentionCard items={items} loading={loading} /> },
+          { id: 'insights', col: 'main', node: !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} /> },
           { id: 'setup', col: 'side', node: admin && !loading && setupOpen && !setupHidden && <SetupCard steps={d.setup} canHide={scenario !== 'new'} onHide={() => setSetupHidden(true)} /> },
           {
             id: 'setupLink', col: 'side', node: admin && !loading && setupOpen && setupHidden && (
@@ -348,11 +416,11 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
               </button>
             ),
           },
-          { id: 'evaluators', col: 'main', node: !loading && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} /> },
-          { id: 'insights', col: 'float', node: !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} /> },
+          { id: 'evaluators', col: 'float', node: !loading && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} /> },
           { id: 'results', col: 'main', node: <ResultsCard rounds={d.completed} team={team} loading={loading} error={resErr} onRetry={() => setFixed((f) => ({ ...f, res: true }))} /> },
           { id: 'joiners', col: 'float', node: <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} /> },
           { id: 'trends', col: 'float', node: !loading && scenario !== 'new' && <TrendsCard rows={d.completed.length >= 2 ? (team ? TRENDS.team : TRENDS.company) : []} team={team} /> },
+          { id: 'quick', col: 'side', node: !loading && scenario !== 'new' && <QuickActionsCard actions={quick} /> },
         ] : [
           { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} /> },
           { id: 'attention', col: 'side', node: <AttentionCard items={items} loading={loading} /> },
@@ -434,7 +502,6 @@ function CompanyHero({ team, title, subtitle, summary, urgent, tiles, kpis, kpiE
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <p className="rise flex flex-wrap items-center gap-2 text-xs leading-4 text-light-text">
-              <span className="rounded-full bg-primary px-2 py-0.5 text-2xs leading-3.5 font-semibold text-white">Company Dashboard</span>
               Monday, 12 October 2026
             </p>
             <h2 id="co-hero-title" className="rise text-display leading-9 font-bold text-heading" style={{ animationDelay: '60ms' }}>{title}</h2>

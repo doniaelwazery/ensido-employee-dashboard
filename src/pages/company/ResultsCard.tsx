@@ -125,7 +125,7 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
 function Bars({ items, max, label }: { items: { key: string; value: number; top: string; name: string; range: string; color: string }[]; max: number; label: string }) {
   return (
     <div role="img" aria-label={`${label}: ${items.map((i) => `${i.name} ${i.top}`).join(', ')}`} className="flex flex-1 flex-col gap-2">
-      <div className="relative min-h-48 flex-1">
+      <div data-chart className="relative max-h-88 min-h-48 flex-1">
         {[0, 25, 50, 75, 100].map((g) => <span key={g} aria-hidden="true" className="absolute inset-x-0 border-t border-dashed border-grey-200" style={{ bottom: `${g}%` }} />)}
         <div className="absolute inset-0 flex items-end gap-3 px-1 sm:gap-4">
           {items.map((it, i) => (

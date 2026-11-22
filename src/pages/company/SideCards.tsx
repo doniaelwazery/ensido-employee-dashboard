@@ -24,8 +24,9 @@ export function AttentionCard({ items, loading }: { items: AttentionItem[]; load
         <Empty icon="check" title="All Clear" text="Nothing needs your action right now. New issues with rounds, results or setup show up here." />
       ) : (
         // Scrolls inside the card (no "Show more"): about 3½ items show, so the cut-off item hints there is more
-        <div className="relative -mx-1">
-          <div role="list" tabIndex={scroll ? 0 : undefined} aria-label={scroll ? `${items.length} items, scroll for more` : undefined} className={`flex flex-col gap-3 px-1 ${scroll ? 'thin-scroll max-h-104 overflow-y-auto overscroll-contain pb-4 focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-primary' : ''}`}>
+        // when the card is stretched to end level with the other column, the list grows (still scrolling) instead of leaving space
+        <div className="relative -mx-1 flex min-h-0 flex-1 flex-col">
+          <div role="list" tabIndex={scroll ? 0 : undefined} aria-label={scroll ? `${items.length} items, scroll for more` : undefined} className={`flex flex-col gap-3 px-1 ${scroll ? 'thin-scroll max-h-104 overflow-y-auto overscroll-contain pb-4 xl:[[data-grow]_&]:max-h-none xl:[[data-grow]_&]:min-h-104 xl:[[data-grow]_&]:flex-1 xl:[[data-grow]_&]:basis-0 focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-primary' : ''}`}>
           {items.map((a) => {
             const s = SEV[a.sev]
             return (
@@ -229,7 +230,7 @@ export function CompletionCard({ rounds, team }: { rounds: RoundVM[]; team: bool
       gap="gap-3"
     >
       <div role="img" aria-label={`Forms submitted by ${word.toLowerCase()} in ${r.title}: ${units.map(([n, v]) => `${n} ${v}%`).join(', ')}`} className="flex flex-1 flex-col gap-2">
-        <div className="relative max-h-80 min-h-44 flex-1">
+        <div data-chart className="relative max-h-80 min-h-44 flex-1">
           {[0, 25, 50, 75, 100].map((g) => <span key={g} aria-hidden="true" className="absolute inset-x-0 border-t border-dashed border-grey-200" style={{ bottom: `${g}%` }} />)}
           <div className="absolute inset-0 flex items-end gap-2 px-1 sm:gap-3">
             {units.map(([n, v], i) => (

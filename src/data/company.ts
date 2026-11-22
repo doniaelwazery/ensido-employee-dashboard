@@ -1,6 +1,6 @@
 // Company Dashboard sample data (Super Admin = whole company, Manager = their teams only).
 // Finalized from the PM draft "Ensido Dashboards › Company Dashboard" (Claude canvas), aligned with My Dashboard:
-// same "today" (Mon 12 Oct 2026), same rounds, same company (Acme Corporation), same score categories.
+// same "today" (Mon 12 Oct 2026), same rounds, same company (Trianglz), same score categories.
 
 export type Role = 'employee' | 'manager' | 'admin'
 export type CompanyScenario = 'typical' | 'busy' | 'one' | 'none' | 'first' | 'new'

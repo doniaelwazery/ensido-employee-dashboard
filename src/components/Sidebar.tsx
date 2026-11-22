@@ -104,7 +104,7 @@ export function Sidebar({ role = 'employee', open = false, onClose }: SidebarPro
         </div>
         <div>
           <p className="text-xs leading-4.5 text-primary-light">Organization</p>
-          <p className="text-sm leading-5 text-white">Acme Corporation</p>
+          <p className="text-sm leading-5 text-white">Trianglz</p>
         </div>
       </div>
     </aside>
