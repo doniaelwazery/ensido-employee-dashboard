@@ -136,6 +136,8 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
    measured in the browser before paint. The last card of each column stretches, so both columns end on one line.
    Below xl the columns dissolve (display: contents) and cards follow the priority order of the list. */
 type ColCard = { id: string; col: 'main' | 'side' | 'float'; node: ReactNode }
+/** chart cards whose chart grows to absorb leftover height; they go last in their column */
+const ELASTIC = ['trends', 'completion']
 const ORD = ['order-1', 'order-2', 'order-3', 'order-4', 'order-5', 'order-6', 'order-7', 'order-8', 'order-9', 'order-10', 'order-11', 'order-12']
 function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }) {
   const live = cards.map((c, i) => ({ ...c, order: i })).filter((c) => c.node)
@@ -170,8 +172,6 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
     const GAP = 24
     const height = (id: string, col: 'main' | 'side') => (col === 'main' ? hMain[id] : hSide.current[id]) ?? 0
     const floats = live.filter((c) => c.col === 'float').map((c) => c.id)
-    // cards whose chart can grow to absorb leftover height (~140px still looks natural)
-    const ELASTIC = ['trends', 'completion']
     let best: Record<string, 'main' | 'side'> = {}
     let bestCost = Infinity
     for (let m = 0; m < 1 << floats.length; m++) {
@@ -182,8 +182,9 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
       const mainH = sum('main')
       const sideH = sum('side')
       const shorter = mainH < sideH ? 'main' : 'side'
-      const lastOfShorter = live.filter((c) => colOfId(c) === shorter).at(-1)?.id ?? ''
-      const cost = Math.max(0, Math.abs(mainH - sideH) - (ELASTIC.includes(lastOfShorter) ? 140 : 0)) + (pick.insights === 'side' ? 200 : 0)
+      // a column holding a chart card ends with it (see arrange), and that chart can grow up to ~150px
+      const elasticEnd = live.some((c) => colOfId(c) === shorter && ELASTIC.includes(c.id))
+      const cost = Math.max(0, Math.abs(mainH - sideH) - (elasticEnd ? 150 : 0)) + (pick.insights === 'side' ? 200 : 0)
       if (cost < bestCost - 1) {
         bestCost = cost
         best = pick
@@ -194,6 +195,7 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
+  const arrange = (list: typeof live) => [...list.filter((c) => !ELASTIC.includes(c.id)), ...list.filter((c) => ELASTIC.includes(c.id))]
   const colOf = (c: (typeof live)[number]) => (c.col === 'float' ? (phase === 'side' ? 'side' : phase === 'main' ? 'main' : (place[c.id] ?? 'side')) : c.col)
   const wrap = (c: (typeof live)[number]) => (
     <div key={c.id} data-card={c.id} className={`${ORD[c.order]} flex min-w-0 flex-col *:flex-1 xl:order-none`}>
@@ -203,8 +205,8 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
   const col = `contents xl:flex xl:min-w-0 xl:flex-col xl:gap-6 ${measuring ? '' : 'xl:[&>*:last-child]:flex-1'}`
   return (
     <div ref={ref} className={`flex flex-col gap-6 xl:grid xl:grid-cols-[minmax(0,1.79fr)_minmax(0,1fr)] ${measuring ? 'xl:items-start' : 'xl:items-stretch'}`}>
-      <div className={col}>{live.filter((c) => colOf(c) === 'main').map(wrap)}</div>
-      <div className={col}>{live.filter((c) => colOf(c) === 'side').map(wrap)}</div>
+      <div className={col}>{arrange(live.filter((c) => colOf(c) === 'main')).map(wrap)}</div>
+      <div className={col}>{arrange(live.filter((c) => colOf(c) === 'side')).map(wrap)}</div>
     </div>
   )
 }
