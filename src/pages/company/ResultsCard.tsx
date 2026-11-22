@@ -50,9 +50,9 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
       gap="gap-5"
     >
       {loading ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-5">
           <Skel className="h-72 rounded-lg" />
-          <div className="flex flex-col gap-3">{[0, 1, 2, 3, 4, 5].map((i) => <Skel key={i} className="h-10" />)}</div>
+          <div className="grid gap-4 md:grid-cols-2">{[0, 1].map((i) => <Skel key={i} className="h-72 rounded-xl" />)}</div>
         </div>
       ) : error ? (
         <div role="alert">
@@ -63,8 +63,8 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
       ) : !round || !s ? (
         <Empty icon="chart" title="No Completed Rounds Yet" text="When your first round closes, its score categories, department averages and top performers appear here." />
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-          <div className="flex min-w-0 flex-col gap-4 self-start rounded-xl border border-grey-200 p-5">
+        <div className="flex flex-col gap-5">
+          <div className="flex min-w-0 flex-col gap-4 rounded-xl border border-grey-200 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="text-sm leading-5 font-semibold text-heading">{view === 'cats' ? 'Score Categories' : `Average Score by ${unitWord}`}</span>
               <div role="group" aria-label="Chart" className="flex gap-0.5 rounded-lg bg-grey-150 p-0.5">
@@ -103,11 +103,12 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-col gap-5">
-            <PeopleList title="Top Performers" people={s.top} tone="good" total={s.top.length} />
-            <PeopleList title="Needs Improvement" people={s.low5} tone="bad" total={s.cats[3]} />
-            <TextLink arrow>Open Full Results</TextLink>
+          {/* PM proposal: two tinted lists side by side under the chart */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <PeopleList title="Top Performers" people={s.top} tone="good" />
+            <PeopleList title="Need Attention" people={s.low5} tone="bad" />
           </div>
+          <TextLink arrow>Open Full Results</TextLink>
         </div>
       )}
     </Card>
@@ -124,7 +125,7 @@ function Bars({ items, max, label }: { items: { key: string; value: number; top:
           {items.map((it, i) => (
             <div key={it.key} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end">
               <span className="mb-1 text-xs leading-4 font-semibold text-heading">{it.top}</span>
-              <span className="grow-y block w-full max-w-14 rounded-t-md" style={{ height: `${Math.max(2, (it.value / max) * 82)}%`, background: it.color, animationDelay: `${i * 70}ms` }} />
+              <span className="grow-y block w-full max-w-20 rounded-t-md" style={{ height: `${Math.max(2, (it.value / max) * 82)}%`, background: it.color, animationDelay: `${i * 70}ms` }} />
             </div>
           ))}
         </div>
@@ -141,33 +142,33 @@ function Bars({ items, max, label }: { items: { key: string; value: number; top:
   )
 }
 
-function PeopleList({ title, people, tone, total }: { title: string; people: Person[]; tone: 'good' | 'bad'; total: number }) {
-  const c = tone === 'good' ? { dot: 'var(--color-success)', fg: 'var(--color-success-dark)' } : { dot: 'var(--color-danger)', fg: 'var(--color-danger-dark)' }
+function PeopleList({ title, people, tone }: { title: string; people: Person[]; tone: 'good' | 'bad' }) {
+  const c =
+    tone === 'good'
+      ? { dot: 'var(--color-success)', fg: 'var(--color-success-dark)', bg: 'var(--color-success-bg)', stroke: 'var(--color-success-stroke)' }
+      : { dot: 'var(--color-danger)', fg: 'var(--color-danger-dark)', bg: 'var(--color-danger-bg)', stroke: 'var(--color-danger-stroke)' }
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2 text-sm leading-5 font-semibold text-heading">
+    <div className="flex min-w-0 flex-col gap-1 rounded-xl border p-3.5" style={{ background: c.bg, borderColor: c.stroke }}>
+      <div className="flex items-center justify-between gap-2 px-2 pb-1.5">
+        <h4 className="flex items-center gap-2 text-[15px] leading-5.5 font-semibold text-heading">
           <span className="size-2 rounded-full" style={{ background: c.dot }} />
           {title}
-          <span className="text-xs leading-4 font-normal text-light-text">{total}</span>
-        </span>
-        {total > people.length && <TextLink>See All {total}</TextLink>}
+        </h4>
+        <TextLink className="text-xs-plus">See All</TextLink>
       </div>
       {people.length === 0 ? (
-        <p className="py-2 text-xs-plus leading-4.5 text-light-text">{tone === 'bad' ? 'Nobody scored below 60% in this round.' : 'No scores yet.'}</p>
+        <p className="px-2 py-3 text-xs-plus leading-4.5 text-light-text">{tone === 'bad' ? 'Nobody scored below 60% in this round.' : 'No scores yet.'}</p>
       ) : (
-        people.map((p) => (
-          <div key={p.name} className="flex items-center gap-3 border-t border-grey-200 py-2 first:border-t-0">
-            <Avatar name={p.name} size={32} />
+        people.map((p, i) => (
+          <a key={p.name} href="#" onClick={(e) => e.preventDefault()} className="flex items-center gap-2.5 rounded-lg p-2 transition-colors hover:bg-card">
+            <span className="w-4.5 shrink-0 text-center text-xs leading-4 font-semibold text-light-text">{i + 1}</span>
+            <span className="rounded-full border border-black/10"><Avatar name={p.name} size={34} /></span>
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-sm leading-5 font-medium text-heading" title={p.name}>{p.name}</span>
-              <span className="truncate text-xs leading-4 text-light-text">{p.job} · {p.unit}</span>
+              <span className="truncate text-xs leading-4 text-light-text">{p.job} · {p.evaluators} evaluators</span>
             </span>
-            <span className="flex flex-col items-end">
-              <span className="text-sm leading-5 font-semibold" style={{ color: c.fg }}>{p.score}%</span>
-              <span className="text-3xs leading-3 text-light-text">{p.evaluators} evaluators</span>
-            </span>
-          </div>
+            <span className="text-sm leading-5 font-bold tabular-nums" style={{ color: c.fg }}>{p.score}%</span>
+          </a>
         ))
       )}
     </div>
