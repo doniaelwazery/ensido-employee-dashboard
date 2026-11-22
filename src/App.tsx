@@ -66,22 +66,21 @@ export default function App() {
     </>
   )
 
+  // Ensido DS tabs (same as the manager dashboard in Figma): underline row, 4px primary bar on the active tab
   const tabs =
     role === 'employee' ? undefined : (
-      <div role="tablist" aria-label="Dashboard view" className="flex gap-1 rounded-lg border border-grey-200 bg-white p-1">
+      <div role="tablist" aria-label="Dashboards" className="mb-6 flex overflow-x-auto border-b border-grey-200">
         {([['my', 'My Dashboard'], ['company', 'Company Dashboard']] as const).map(([v, l]) => {
           const on = view === v
           return (
-            <button key={v} type="button" role="tab" aria-selected={on} onClick={() => setView(v)} className={`flex h-8 cursor-pointer items-center gap-2 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors ${on ? 'bg-primary text-white' : 'text-body-text hover:bg-row-hover hover:text-primary'}`}>
-              {v === 'my' ? (
-                // the signed-in user's initials: "this is about me"
-                <span aria-hidden="true" className={`flex size-5 items-center justify-center rounded-full text-3xs leading-3 font-semibold ${on ? 'bg-white text-primary' : 'bg-primary-lighter text-primary-dark'}`}>
-                  {user.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}
-                </span>
-              ) : (
-                // the organization icon from the side menu, tinted with currentColor
-                <span aria-hidden="true" className="size-4 shrink-0 bg-current [mask:url(/assets/org-icon.svg)_center/contain_no-repeat]" />
-              )}
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={on}
+              onClick={() => setView(v)}
+              className={`-mb-px shrink-0 cursor-pointer border-b-4 px-6 py-2.5 text-base leading-6 whitespace-nowrap transition-colors ${on ? 'border-primary font-medium text-primary' : 'border-transparent text-light-text hover:text-body-text'}`}
+            >
               {l}
             </button>
           )
@@ -97,7 +96,6 @@ export default function App() {
         <main className="page-in flex-1 px-4 pb-10 sm:px-6">
           <PageTitle
             title="Dashboard"
-            tabs={tabs}
             aside={
               company && role === 'admin' && (
                 <button type="button" className="flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium whitespace-nowrap text-white transition-colors hover:bg-primary-dark">
@@ -106,6 +104,7 @@ export default function App() {
               )
             }
           />
+          {tabs}
           {company ? (
             <CompanyDashboardPage key={role} role={role as Exclude<Role, 'employee'>} rolePicker={rolePicker} />
           ) : (
