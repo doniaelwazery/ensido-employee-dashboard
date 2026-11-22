@@ -83,7 +83,7 @@ export function MoversCard({ up, down, from, to }: { up: Mover[]; down: Mover[];
   )
   return (
     <Card id="co-movers" title="Biggest Movers" sub={`${from} → ${to}`} gap="gap-4">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-1">
         {col('Most Improved', up, true)}
         {col('Biggest Declines', down, false)}
       </div>
