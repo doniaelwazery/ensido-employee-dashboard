@@ -62,7 +62,7 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
       ) : !round || !s ? (
         <Empty icon="chart" title="No Completed Rounds Yet" text="When your first round closes, its score bands, department averages and top performers appear here." />
       ) : (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-1 flex-col gap-5">
           {idx === 0 && !readySeen && (
             <div role="status" className="flex items-center gap-3 rounded-lg border border-success-stroke bg-success-bg px-4 py-2.5 text-sm leading-5 text-success-dark">
               <Icon name="check" size={16} sw={2.6} color="var(--color-success)" />
@@ -70,7 +70,7 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
               <button type="button" aria-label="Dismiss" onClick={() => setReadySeen(true)} className="flex size-7 cursor-pointer items-center justify-center rounded-md hover:bg-white/60"><Icon name="close" size={14} /></button>
             </div>
           )}
-          <div className="flex min-w-0 flex-col gap-4 rounded-xl border border-grey-200 p-5">
+          <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-xl border border-grey-200 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="text-sm leading-5 font-semibold text-heading">{view === 'cats' ? 'Score Bands' : `Average Score by ${unitWord}`}</span>
               <div role="group" aria-label="Chart" className="flex gap-0.5 rounded-lg bg-grey-150 p-0.5">
@@ -124,8 +124,8 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
 /** shadcn-style vertical bars: faint gridlines, no axis lines, rounded tops, value on top, label + range below. */
 function Bars({ items, max, label }: { items: { key: string; value: number; top: string; name: string; range: string; color: string }[]; max: number; label: string }) {
   return (
-    <div role="img" aria-label={`${label}: ${items.map((i) => `${i.name} ${i.top}`).join(', ')}`} className="flex flex-col gap-2">
-      <div className="relative h-48">
+    <div role="img" aria-label={`${label}: ${items.map((i) => `${i.name} ${i.top}`).join(', ')}`} className="flex flex-1 flex-col gap-2">
+      <div className="relative min-h-48 flex-1">
         {[0, 25, 50, 75, 100].map((g) => <span key={g} aria-hidden="true" className="absolute inset-x-0 border-t border-dashed border-grey-200" style={{ bottom: `${g}%` }} />)}
         <div className="absolute inset-0 flex items-end gap-3 px-1 sm:gap-4">
           {items.map((it, i) => (

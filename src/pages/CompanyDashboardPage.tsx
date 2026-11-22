@@ -39,18 +39,27 @@ export function CompanyDashboardPage({ role, rolePicker }: { role: Exclude<Role,
     setTrial(s === 'new')
     load(700)
   }
+  // UX review: "proposed" (lean, fixed layout) vs "current" (everything, self-balancing). ?layout=current shows the old one.
+  const [lean, setLeanRaw] = useState(() => new URLSearchParams(location.search).get('layout') !== 'current')
+  const setLean = (v: boolean) => {
+    setLeanRaw(v)
+    const u = new URL(location.href)
+    if (v) u.searchParams.delete('layout')
+    else u.searchParams.set('layout', 'current')
+    history.replaceState(null, '', u)
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      <CompanyControls role={role} rolePicker={rolePicker} scenario={sc} setScenario={setScenario} loading={loading} reload={() => load(1200)} fail={fail} setFail={setFail} trial={trial} setTrial={setTrial} />
-      <Board key={`${sc}-${role}`} scenario={sc} role={role} loading={loading} fail={fail} trial={trial && role === 'admin'} onTrialClose={() => setTrial(false)} />
+      <CompanyControls role={role} rolePicker={rolePicker} scenario={sc} setScenario={setScenario} loading={loading} reload={() => load(1200)} fail={fail} setFail={setFail} trial={trial} setTrial={setTrial} lean={lean} setLean={setLean} />
+      <Board key={`${sc}-${role}-${lean}`} scenario={sc} role={role} loading={loading} fail={fail} trial={trial && role === 'admin'} onTrialClose={() => setTrial(false)} lean={lean} />
     </div>
   )
 }
 
 type Modal = { type: 'remind' | 'edit' | 'end' | 'cancel'; r: RoundVM } | null
 
-function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenario: CompanyScenario; role: Exclude<Role, 'employee'>; loading: boolean; fail: boolean; trial: boolean; onTrialClose: () => void }) {
+function Board({ scenario, role, loading, fail, trial, onTrialClose, lean }: { scenario: CompanyScenario; role: Exclude<Role, 'employee'>; loading: boolean; fail: boolean; trial: boolean; onTrialClose: () => void; lean: boolean }) {
   const d = COMPANY[scenario]
   const admin = role === 'admin'
   const team = role === 'manager'
@@ -125,6 +134,10 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
     items.push({ id: 'people', sev: 'info', text: 'Add or import your team so you can start your first evaluation round.', meta: 'Only you so far', action: 'Add Employees', onAction: () => {} })
   if (setupOpen)
     items.push({ id: 'setup', sev: 'info', text: 'Finish setting up your company so rounds run smoothly.', meta: `${setupDone} of ${d.setup.length} done`, action: 'Continue Setup', onAction: () => { setSetupHidden(false); window.setTimeout(() => jump('co-setup'), 50) } })
+  // proposed layout: setup gaps are to-dos, so they live here instead of in their own card
+  if (lean && admin && scenario !== 'new')
+    for (const g of d.gaps)
+      items.push({ id: `gap-${g.label}`, sev: g.sev, text: `${g.count} ${g.label.charAt(0).toLowerCase()}${g.label.slice(1)}.`, meta: 'Setup gap', action: g.action, onAction: () => {} })
   if (admin && rounds.length === 0 && d.completed.length > 0)
     items.push({ id: 'idle', sev: 'info', text: `No round is running. The last round closed and was published on ${latest.published}.`, meta: 'No active rounds', action: 'Start Evaluation Round', onAction: () => {} })
   const rank = { critical: 0, warning: 1, info: 2 }
@@ -228,11 +241,12 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
         : (first.due < 0
             ? `${first.title} is ${-first.due} days past its deadline${rounds.length > 1 ? `, and ${rounds.length - 1} more round${rounds.length > 2 ? 's are' : ' is'} running` : ''}.`
             : `${first.title} closes in ${first.due} days with ${first.pct}% of forms submitted.`) + (d.completed.length === 0 ? ' Results show here once it closes.' : '')
-  const tiles = [
+  const tiles: Tile[] = [
     { label: 'Active rounds', value: rounds.length, suffix: '', hint: !rounds.length ? 'No rounds running' : overdueN ? `${overdueN} overdue${nextOpen ? ` · next deadline in ${nextOpen.due} days` : ''}` : nextOpen ? `Next deadline in ${nextOpen.due} days` : 'All forms submitted', dot: !rounds.length ? 'var(--color-light-text)' : overdueN || (nextOpen && nextOpen.due <= 3) ? 'var(--color-danger)' : 'var(--color-primary-light)', target: 'co-rounds' },
     { label: 'Forms submitted', value: pctAll, suffix: rounds.length ? '%' : '', hint: rounds.length ? `${fmt(subTotal)} of ${fmt(formsTotal)} in active rounds` : 'Appears when a round starts', dot: !rounds.length ? 'var(--color-light-text)' : pctAll >= 80 ? 'var(--color-success)' : pctAll > 50 ? 'var(--color-warning)' : 'var(--color-danger)', target: 'co-rounds', empty: !rounds.length },
-    { label: 'Needs your attention', value: items.length, suffix: '', hint: items.length ? (items.some((i) => i.sev === 'critical') ? `${items.filter((i) => i.sev === 'critical').length} critical` : 'Nothing critical') : 'All clear', dot: items.some((i) => i.sev === 'critical') ? 'var(--color-danger)' : items.some((i) => i.sev === 'warning') ? 'var(--color-warning)' : items.length ? 'var(--color-primary-light)' : 'var(--color-success)', target: 'co-attention' },
   ]
+  tiles.push(
+    { label: 'Needs your attention', value: items.length, suffix: '', hint: items.length ? (items.some((i) => i.sev === 'critical') ? `${items.filter((i) => i.sev === 'critical').length} critical` : 'Nothing critical') : 'All clear', dot: items.some((i) => i.sev === 'critical') ? 'var(--color-danger)' : items.some((i) => i.sev === 'warning') ? 'var(--color-warning)' : items.length ? 'var(--color-primary-light)' : 'var(--color-success)', target: 'co-attention' })
 
   /* ---------- key numbers ---------- */
   const kpis: { label: string; value: string; note: string; delta?: number }[] = team
@@ -274,12 +288,12 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
     if (team) {
       if (has360) insights.push({ tone: 'critical', text: 'Backend Team has submitted the fewest forms in Engineering 360 Feedback, and it closes in 2 days.', link: 'See pending evaluators', target: 'co-evaluators' })
       if (latest) insights.push({ tone: 'good', text: `Mobile Team has the highest average of your teams (80%) in ${latest.short}.`, link: 'Open results by team', target: 'co-results' })
-      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: `Youssef Nabil and Salma Adel both dropped about 10 points since ${d.completed[1].short}.`, link: 'Review biggest movers', target: 'co-movers' })
+      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: `Youssef Nabil and Salma Adel both dropped about 10 points since ${d.completed[1].short}.`, link: lean ? 'Open full results' : 'Review biggest movers', target: lean ? 'co-results' : 'co-movers' })
     } else {
       if (hasQ3) insights.push({ tone: 'critical', text: 'Engineering is 12 points behind the company in Q3 2026 Performance Review completion. 3 evaluators hold 21 of its pending forms.', link: 'See pending evaluators', target: 'co-evaluators' })
       else if (latest) insights.push({ tone: 'good', text: `${latest.short} closed with 95% participation, the highest in the last six rounds.`, link: 'Open trends', target: 'co-trends' })
       if (latest) insights.push({ tone: 'good', text: `Customer Success has the highest department average (81%) in ${latest.short}, up 3 points.`, link: 'Open results by department', target: 'co-results' })
-      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: '3 employees declined two rounds in a row, and all three report to the same manager.', link: 'Review biggest movers', target: 'co-movers' })
+      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: '3 employees declined two rounds in a row, and all three report to the same manager.', link: lean ? 'Open full results' : 'Review biggest movers', target: lean ? 'co-results' : 'co-movers' })
       if (!latest && first) insights.push({ tone: 'warning', text: `Your first results arrive when ${first.title} closes on ${first.deadline}. ${first.pct}% of forms are in so far.`, link: 'Open the round', target: 'co-rounds' })
     }
   }
@@ -303,11 +317,11 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
       <CompanyHero
         team={team}
         title={team ? 'Your Teams' : 'Acme Corporation'}
-        subtitle={team ? 'Engineering · Mobile, Backend and QA teams · 18 employees' : `Company overview · ${fmt(d.employees)} employee${d.employees === 1 ? '' : 's'}`}
+        subtitle={team ? 'Engineering · Mobile, Backend and QA teams · 18 employees' : `Company overview · ${fmt(d.employees)} employee${d.employees === 1 ? '' : 's'}${lean ? ` · ${fmt(d.seats[0])} of ${fmt(d.seats[1])} seats used` : ''}`}
         summary={summary}
         urgent={items.some((i) => i.sev === 'critical')}
         tiles={tiles}
-        kpis={kpis}
+        kpis={lean ? [] : kpis}
         kpiErr={kpiErr}
         onRetryKpi={() => setFixed((f) => ({ ...f, kpi: true }))}
         loading={loading}
@@ -318,9 +332,28 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
       {/* Two independent columns (main + side) with the same widths everywhere, so cards stack without gaps and the
           gutters line up; the last card of each column stretches so both columns end on one line. Below xl the
           column wrappers dissolve (display: contents) and every card falls into one column in priority order. */}
+      {/* Proposed layout (UX review): every section has a fixed place, ordered by the job it does.
+          Main: act on running rounds (rounds → who is late) then see how it went (results).
+          Side: what needs you (attention, setup) then context (insights, trends; recent joiners for managers). */}
       <Columns
-        balanceKey={`${scenario}-${role}-${loading}-${rounds.length}-${insights.length}-${setupOpen}-${setupHidden}`}
-        cards={[
+        balanceKey={`${scenario}-${role}-${loading}-${rounds.length}-${insights.length}-${setupOpen}-${setupHidden}-${lean}`}
+        cards={lean ? [
+          { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} /> },
+          { id: 'attention', col: 'side', node: <AttentionCard items={items} loading={loading} /> },
+          { id: 'setup', col: 'side', node: admin && !loading && setupOpen && !setupHidden && <SetupCard steps={d.setup} canHide={scenario !== 'new'} onHide={() => setSetupHidden(true)} /> },
+          {
+            id: 'setupLink', col: 'side', node: admin && !loading && setupOpen && setupHidden && (
+              <button type="button" onClick={() => setSetupHidden(false)} className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-primary-light bg-row-hover px-5 py-3.5 text-sm leading-5 font-medium text-primary hover:bg-primary-lighter">
+                Continue Setup ({setupDone} of {d.setup.length}) <Icon name="arrow" size={14} />
+              </button>
+            ),
+          },
+          { id: 'evaluators', col: 'main', node: !loading && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} /> },
+          { id: 'insights', col: 'float', node: !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} /> },
+          { id: 'results', col: 'main', node: <ResultsCard rounds={d.completed} team={team} loading={loading} error={resErr} onRetry={() => setFixed((f) => ({ ...f, res: true }))} /> },
+          { id: 'joiners', col: 'float', node: <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} /> },
+          { id: 'trends', col: 'float', node: !loading && scenario !== 'new' && <TrendsCard rows={d.completed.length >= 2 ? (team ? TRENDS.team : TRENDS.company) : []} team={team} /> },
+        ] : [
           { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} /> },
           { id: 'attention', col: 'side', node: <AttentionCard items={items} loading={loading} /> },
           { id: 'insights', col: 'float', node: !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} /> },
@@ -422,7 +455,7 @@ function CompanyHero({ team, title, subtitle, summary, urgent, tiles, kpis, kpiE
           </button>
         )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className={`grid grid-cols-1 gap-3 ${tiles.length === 2 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 xl:grid-cols-4'}`}>
           {tiles.map((t, i) => (
             <button key={t.label} type="button" onClick={() => jump(t.target)} className={tile} style={{ animationDelay: `${200 + i * 70}ms` }}>
               <span className="flex items-center gap-2 text-xs leading-4 font-medium text-light-text">
@@ -460,8 +493,8 @@ function CompanyHero({ team, title, subtitle, summary, urgent, tiles, kpis, kpiE
         </div>
       </div>
 
-      {/* key numbers band */}
-      <div aria-label={team ? 'Your teams in numbers' : 'Key numbers'} role="group" className="relative border-t border-primary-light/60 bg-card/70 px-6 py-4 backdrop-blur-sm sm:px-8">
+      {/* key numbers band (left out of the proposed layout) */}
+      {kpis.length > 0 && <div aria-label={team ? 'Your teams in numbers' : 'Key numbers'} role="group" className="relative border-t border-primary-light/60 bg-card/70 px-6 py-4 backdrop-blur-sm sm:px-8">
         {kpiErr && !loading ? (
           <div role="alert" className="flex flex-wrap items-center gap-3 text-sm leading-5 text-body-text">
             <Icon name="alert" size={18} color="var(--color-danger)" />
@@ -491,14 +524,14 @@ function CompanyHero({ team, title, subtitle, summary, urgent, tiles, kpis, kpiE
             ))}
           </div>
         )}
-      </div>
+      </div>}
     </section>
   )
 }
 
 /* ---------- prototype controls ---------- */
 
-function CompanyControls({ role, rolePicker, scenario, setScenario, loading, reload, fail, setFail, trial, setTrial }: { role: Exclude<Role, 'employee'>; rolePicker: ReactNode; scenario: CompanyScenario; setScenario: (s: CompanyScenario) => void; loading: boolean; reload: () => void; fail: boolean; setFail: (v: boolean) => void; trial: boolean; setTrial: (v: boolean) => void }) {
+function CompanyControls({ role, rolePicker, scenario, setScenario, loading, reload, fail, setFail, trial, setTrial, lean, setLean }: { role: Exclude<Role, 'employee'>; rolePicker: ReactNode; scenario: CompanyScenario; setScenario: (s: CompanyScenario) => void; loading: boolean; reload: () => void; fail: boolean; setFail: (v: boolean) => void; trial: boolean; setTrial: (v: boolean) => void; lean: boolean; setLean: (v: boolean) => void }) {
   const [open, setOpen] = useState(false)
   const opts = SCENARIOS.filter(([s]) => role === 'admin' || s !== 'new')
   return (
@@ -506,6 +539,12 @@ function CompanyControls({ role, rolePicker, scenario, setScenario, loading, rel
     <div role="region" aria-label="Prototype controls" className="fixed right-4 bottom-4 z-40 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-2">
       {open && (
         <div className="menu-in flex w-92 max-w-full flex-col items-start gap-3 rounded-lg bg-secondary p-4 text-sm leading-5 text-white shadow-tooltip">
+          <span className="font-medium">Layout (UX review)</span>
+          <div role="group" aria-label="Layout" className="flex flex-wrap gap-1 rounded-lg bg-white/10 p-1">
+            {([[true, 'Proposed'], [false, 'Current']] as const).map(([v, l]) => (
+              <button key={l} type="button" aria-pressed={lean === v} onClick={() => setLean(v)} className={`h-8 cursor-pointer rounded-md px-3 text-sm font-medium transition-colors ${lean === v ? 'bg-primary text-white' : 'text-primary-light hover:text-white'}`}>{l}</button>
+            ))}
+          </div>
           {rolePicker}
           <span className="font-medium">Data scenario</span>
           <div role="group" aria-label="Data scenario" className="flex flex-wrap gap-1 rounded-lg bg-white/10 p-1">

@@ -14,7 +14,7 @@ export function TrendsCard({ rows, team }: { rows: [string, number, number][]; t
       ) : (
         <>
           <div role="img" aria-label={`Average score per round: ${rows.map(([q, v, p]) => `${q} ${v}% with ${p}% participation`).join(', ')}`} className="flex flex-1 flex-col gap-2">
-            <div className="relative max-h-80 min-h-40 flex-1">
+            <div className="relative min-h-40 flex-1">
               {[0, 25, 50, 75, 100].map((g) => <span key={g} aria-hidden="true" className="absolute inset-x-0 border-t border-dashed border-grey-200" style={{ bottom: `${g}%` }} />)}
               <div className="absolute inset-0 flex items-end gap-3 px-1">
                 {rows.map(([q, v], i) => (

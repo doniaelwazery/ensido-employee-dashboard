@@ -15,20 +15,21 @@ const SEV: Record<Sev, { label: string; bg: string; stroke: string; fg: string; 
 }
 
 export function AttentionCard({ items, loading }: { items: AttentionItem[]; loading: boolean }) {
-  const [all, setAll] = useState(false)
-  const shown = all ? items : items.slice(0, 4)
+  const scroll = items.length > 3
   return (
-    <Card id="co-attention" busy={loading} title={<>Needs Your Attention{!loading && items.length > 0 && <span className={`rounded-full px-2 py-0.5 text-xs leading-4 font-medium text-white ${items.some((i) => i.sev === 'critical') ? 'bg-danger' : 'bg-primary'}`}>{items.length}</span>}</>} sub={loading ? undefined : items.length ? 'Most urgent first' : undefined} gap="gap-3">
+    <Card id="co-attention" busy={loading} title={<>Needs Your Attention{!loading && items.length > 0 && <span className={`rounded-full px-2 py-0.5 text-xs leading-4 font-medium text-white ${items.some((i) => i.sev === 'critical') ? 'bg-danger' : 'bg-primary'}`}>{items.length}</span>}</>} sub={loading ? undefined : items.length ? `Most urgent first${items.length > 3 ? ' · scroll to see all' : ''}` : undefined} gap="gap-3">
       {loading ? (
         [0, 1, 2, 3].map((i) => <Skel key={i} className="h-19 rounded-lg" />)
       ) : items.length === 0 ? (
         <Empty icon="check" title="All Clear" text="Nothing needs your action right now. New issues with rounds, results or setup show up here." />
       ) : (
-        <>
-          {shown.map((a) => {
+        // Scrolls inside the card (no "Show more"): about 3½ items show, so the cut-off item hints there is more
+        <div className="relative -mx-1">
+          <div role="list" tabIndex={scroll ? 0 : undefined} aria-label={scroll ? `${items.length} items, scroll for more` : undefined} className={`flex flex-col gap-3 px-1 ${scroll ? 'thin-scroll max-h-104 overflow-y-auto overscroll-contain pb-4 focus-visible:rounded-lg focus-visible:outline-2 focus-visible:outline-primary' : ''}`}>
+          {items.map((a) => {
             const s = SEV[a.sev]
             return (
-              <div key={a.id} className="flex flex-col gap-2.5 rounded-tile border p-3.5" style={{ borderColor: a.sev === 'critical' ? s.stroke : 'var(--color-grey-200)', background: a.sev === 'critical' ? 'var(--color-danger-surface)' : 'var(--color-card)' }}>
+              <div key={a.id} role="listitem" className="flex shrink-0 flex-col gap-2.5 rounded-tile border p-3.5" style={{ borderColor: a.sev === 'critical' ? s.stroke : 'var(--color-grey-200)', background: a.sev === 'critical' ? 'var(--color-danger-surface)' : 'var(--color-card)' }}>
                 <div className="flex items-start gap-2.5">
                   <span className="mt-1.5 size-2 shrink-0 rounded-full" style={{ background: s.dot }} />
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -49,8 +50,9 @@ export function AttentionCard({ items, loading }: { items: AttentionItem[]; load
               </div>
             )
           })}
-          {items.length > 4 && <TextLink onClick={() => setAll(!all)}>{all ? 'Show Less' : `Show ${items.length - 4} More`}</TextLink>}
-        </>
+          </div>
+          {scroll && <span aria-hidden="true" className="pointer-events-none absolute inset-x-1 bottom-0 h-6 bg-linear-to-t from-card to-transparent" />}
+        </div>
       )}
     </Card>
   )

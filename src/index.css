@@ -307,3 +307,19 @@
 .tilt[data-active] .tilt-pop-sm { transform: translateZ(25px); }
 @media (prefers-reduced-motion: reduce) { .tilt, .tilt[data-active], .tilt-pop, .tilt-pop-sm { transform: none !important; } }
 
+
+/* Company Dashboard: an empty state in a card that stretches to end level with the other column sits centred in it */
+[data-card] > section > :last-child:has(> .empty-icon) {
+  flex: 1;
+  justify-content: center;
+}
+
+/* Thin, simple scrollbar: 4px rounded grey thumb, no track or arrows (Needs Your Attention list) */
+.thin-scroll::-webkit-scrollbar { width: 4px; }
+.thin-scroll::-webkit-scrollbar-track { background: transparent; }
+.thin-scroll::-webkit-scrollbar-thumb { background: var(--color-grey-200); border-radius: 999px; }
+.thin-scroll:hover::-webkit-scrollbar-thumb { background: var(--color-light-text); }
+.thin-scroll::-webkit-scrollbar-button { display: none; height: 0; }
+@supports not selector(::-webkit-scrollbar) {
+  .thin-scroll { scrollbar-width: thin; scrollbar-color: var(--color-grey-200) transparent; }
+}
