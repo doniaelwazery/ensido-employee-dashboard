@@ -26,7 +26,7 @@ export const dueTone = (r: RoundVM) =>
     : r.due <= 3
       ? { bg: 'var(--color-danger-bg)', stroke: 'var(--color-danger-stroke)', fg: 'var(--color-danger-dark)' }
       : r.due <= 10
-        ? { bg: 'var(--color-warning-bg)', stroke: 'var(--color-warning-stroke)', fg: '#b45309' }
+        ? { bg: 'var(--color-warning-bg)', stroke: 'var(--color-warning-stroke)', fg: 'var(--color-warning-fg)' }
         : { bg: 'var(--color-info-bg)', stroke: 'var(--color-info-stroke)', fg: 'var(--color-info-dark)' }
 const fmt = (n: number) => n.toLocaleString('en-US')
 
@@ -118,7 +118,7 @@ function Spotlight({ r, admin, team, actions }: { r: RoundVM; admin: boolean; te
           <span className="text-body-text">{fmt(r.submitted)} of {fmt(r.forms)} forms submitted</span>
           <span className="font-semibold text-heading">{r.pct}%</span>
         </div>
-        <Bar pct={r.pct} color={progressColor(r.pct)} track="var(--color-white)" label={`${r.title} forms submitted`} />
+        <Bar pct={r.pct} color={progressColor(r.pct)} track="var(--color-card)" label={`${r.title} forms submitted`} />
       </div>
 
       <dl className="relative grid grid-cols-3 gap-3">

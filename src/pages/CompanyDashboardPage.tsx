@@ -192,7 +192,7 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
 
       {trial && !loading && (
         <div role="note" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-warning-stroke bg-warning-bg px-5 py-3">
-          <Icon name="info" size={18} color="#b45309" />
+          <Icon name="info" size={18} color="var(--color-warning-fg)" />
           <p className="min-w-0 flex-1 text-sm leading-5 text-heading"><span className="font-semibold">Your trial ends in 9 days.</span> Upgrade to keep evaluating without interruption.</p>
           <button type="button" className="h-9 cursor-pointer rounded-lg bg-primary px-4 text-sm font-medium text-white hover:bg-primary-dark">Upgrade Plan</button>
           <button type="button" aria-label="Dismiss" onClick={onTrialClose} className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-light-text hover:bg-white/60"><Icon name="close" /></button>

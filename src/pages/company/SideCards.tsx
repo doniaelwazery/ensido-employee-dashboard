@@ -10,7 +10,7 @@ export type Sev = 'critical' | 'warning' | 'info'
 export type AttentionItem = { id: string; sev: Sev; text: string; meta: string; action: string; onAction: () => void; primary?: boolean }
 const SEV: Record<Sev, { label: string; bg: string; stroke: string; fg: string; dot: string }> = {
   critical: { label: 'Critical', bg: 'var(--color-danger-bg)', stroke: 'var(--color-danger-stroke)', fg: 'var(--color-danger-dark)', dot: 'var(--color-danger)' },
-  warning: { label: 'Warning', bg: 'var(--color-warning-bg)', stroke: 'var(--color-warning-stroke)', fg: '#b45309', dot: 'var(--color-warning)' },
+  warning: { label: 'Warning', bg: 'var(--color-warning-bg)', stroke: 'var(--color-warning-stroke)', fg: 'var(--color-warning-fg)', dot: 'var(--color-warning)' },
   info: { label: 'Info', bg: 'var(--color-info-bg)', stroke: 'var(--color-info-stroke)', fg: 'var(--color-info-dark)', dot: 'var(--color-info)' },
 }
 
@@ -28,7 +28,7 @@ export function AttentionCard({ items, loading }: { items: AttentionItem[]; load
           {shown.map((a) => {
             const s = SEV[a.sev]
             return (
-              <div key={a.id} className="flex flex-col gap-2.5 rounded-tile border p-3.5" style={{ borderColor: a.sev === 'critical' ? s.stroke : 'var(--color-grey-200)', background: a.sev === 'critical' ? 'var(--color-danger-surface)' : 'var(--color-white)' }}>
+              <div key={a.id} className="flex flex-col gap-2.5 rounded-tile border p-3.5" style={{ borderColor: a.sev === 'critical' ? s.stroke : 'var(--color-grey-200)', background: a.sev === 'critical' ? 'var(--color-danger-surface)' : 'var(--color-card)' }}>
                 <div className="flex items-start gap-2.5">
                   <span className="mt-1.5 size-2 shrink-0 rounded-full" style={{ background: s.dot }} />
                   <div className="flex min-w-0 flex-1 flex-col gap-1">

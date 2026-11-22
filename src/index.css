@@ -70,6 +70,7 @@
   --color-danger-stroke: #fabebe;
   --color-danger-bg: #fef2f2; /* Danger BG */
   --color-purple-light: #e9d8ff; /* Purple Light */
+  --color-warning-fg: #b45309; /* text on warning-bg */
 
   --shadow-card: 0 1px 1.5px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.1);
   --shadow-tooltip: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
@@ -85,6 +86,63 @@
     @apply bg-body-bg font-sans text-body-text antialiased;
   }
 }
+
+/* ---------- Dark mode ----------
+   <html data-theme="dark"> (set from the avatar menu: Light / Dark / System). Every utility reads the colour
+   tokens, so redefining them here restyles the whole page. Brand primary, status colours and the navy hero /
+   side menu stay the same; surfaces, text, borders and the soft status fills switch to dark values. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-body-bg: #000623;
+  --color-card: #0b1333;
+  --color-grey-light: #111a3d;
+  --color-grey-100: #0f173a;
+  --color-grey-150: #1a2448;
+  --color-grey-200: #1f2a50;
+  --color-border: #2e3a66;
+  --color-border-darker: #4a5580;
+  --color-placeholder: #4a5580;
+  --color-heading: #f5f5f5;
+  --color-body-text: #d4d4d4;
+  --color-light-text: #a3a3a3;
+  --color-row-hover: #161d4a;
+  --color-primary-dark: #7b7be6;
+  --color-primary-lighter: #252c66;
+  --color-success-bg: #0c2e30;
+  --color-success-stroke: #1e5a55;
+  --color-success-dark: #6ad1c4;
+  --color-info-bg: #0f2350;
+  --color-info-stroke: #1d3f80;
+  --color-info-dark: #8bc2ff;
+  --color-warning-bg: #33240a;
+  --color-warning-stroke: #6b4a12;
+  --color-warning-fg: #fde68a;
+  --color-danger-bg: #3a0d1d;
+  --color-danger-stroke: #6b1d33;
+  --color-danger-dark: #ff8b82;
+  --color-danger-surface: #1f0b19;
+  --color-purple-bg: #251a45;
+  --color-purple-stroke: #4a2f80;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-focus-card: 0 0 0 4px color-mix(in srgb, var(--color-primary) 12%, transparent), 0 12px 28px -14px rgba(0, 0, 0, 0.8);
+}
+/* White surfaces (cards, inputs, outline buttons, top bar) follow the card colour */
+:root[data-theme="dark"] .bg-white:not(.hero *, aside *, .bg-primary *) { background-color: var(--color-card); }
+/* Primary text links need more contrast on dark cards */
+:root[data-theme="dark"] .text-primary:not(.hero *, .bg-white.rounded-full *, .bg-primary *, .bg-white.rounded-full) { color: #a5a5f3; }
+:root[data-theme="dark"] .hover\:text-primary-dark:hover { color: #c9c9f8; }
+/* The hero is always navy: keep its light-on-dark text colours and the white category pill readable */
+:root[data-theme="dark"] .hero {
+  --color-grey-200: #e4e3e8;
+  --color-success-stroke: #a8e6c5;
+  --color-danger-stroke: #fabebe;
+  --color-success-dark: #038c7e;
+  --color-primary-dark: #383893;
+  --color-info-dark: #1d4ed8;
+  --color-danger-dark: #9b0025;
+}
+:root[data-theme="dark"] .dark-invert { filter: invert(1) hue-rotate(180deg); }
+:root[data-theme="dark"] .hero, :root[data-theme="dark"] aside { box-shadow: inset 0 0 0 1px #1f2a50; }
 
 /* Thin "Classic" scrollbar used in the KPIs overview card (grey-200 track, grey-500 thumb) */
 @layer components {

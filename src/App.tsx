@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PageTitle } from './components/PageTitle'
 import { Sidebar } from './components/Sidebar'
-import { TopBar } from './components/TopBar'
+import { TopBar, type ThemePref } from './components/TopBar'
 import { USERS, type Role } from './data/company'
 import { CompanyDashboardPage } from './pages/CompanyDashboardPage'
 import { DashboardPage } from './pages/DashboardPage'
@@ -34,6 +34,22 @@ export default function App() {
     sync(role, v)
     window.scrollTo({ top: 0 })
   }
+  // Theme: Light / Dark / System (avatar menu). Remembered per browser; ?theme=dark opens it directly.
+  const [theme, setThemeRaw] = useState<ThemePref>(() => {
+    const t = q.get('theme') ?? (() => { try { return localStorage.getItem('ensido-theme') } catch { return null } })()
+    return t === 'dark' || t === 'system' ? t : 'light'
+  })
+  const setTheme = (t: ThemePref) => {
+    setThemeRaw(t)
+    try { localStorage.setItem('ensido-theme', t) } catch { /* storage unavailable */ }
+  }
+  useEffect(() => {
+    const mq = matchMedia('(prefers-color-scheme: dark)')
+    const apply = () => { document.documentElement.dataset.theme = theme === 'system' ? (mq.matches ? 'dark' : 'light') : theme }
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [theme])
   const user = USERS[role]
   const company = role !== 'employee' && view === 'company'
 
@@ -63,9 +79,9 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
+      <Sidebar role={role} open={navOpen} onClose={() => setNavOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar onMenu={() => setNavOpen(true)} user={user} />
+        <TopBar onMenu={() => setNavOpen(true)} user={user} theme={theme} setTheme={setTheme} />
         <main className="page-in flex-1 px-4 pb-10 sm:px-6">
           <PageTitle
             title="Dashboard"

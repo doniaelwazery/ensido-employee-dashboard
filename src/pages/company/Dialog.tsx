@@ -4,8 +4,8 @@ import { Icon, type PATHS } from '../dashboard/shared'
 type Tone = 'primary' | 'warning' | 'danger'
 const TONES: Record<Tone, { bg: string; stroke: string; fg: string; btn: string }> = {
   primary: { bg: 'var(--color-row-hover)', stroke: 'var(--color-primary-light)', fg: 'var(--color-primary)', btn: 'bg-primary hover:bg-primary-dark' },
-  warning: { bg: 'var(--color-warning-bg)', stroke: 'var(--color-warning-stroke)', fg: '#b45309', btn: 'bg-primary hover:bg-primary-dark' },
-  danger: { bg: 'var(--color-danger-bg)', stroke: 'var(--color-danger-stroke)', fg: 'var(--color-danger)', btn: 'bg-danger hover:bg-danger-dark' },
+  warning: { bg: 'var(--color-warning-bg)', stroke: 'var(--color-warning-stroke)', fg: 'var(--color-warning-fg)', btn: 'bg-primary hover:bg-primary-dark' },
+  danger: { bg: 'var(--color-danger-bg)', stroke: 'var(--color-danger-stroke)', fg: 'var(--color-danger)', btn: 'bg-danger hover:brightness-90' },
 }
 
 /** Confirmation dialog: icon, title, body, optional extra field, Cancel + confirm. Esc / backdrop close it. */

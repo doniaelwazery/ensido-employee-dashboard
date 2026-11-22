@@ -9,7 +9,7 @@ export function initials(name: string) {
   const p = name.trim().split(/\s+/)
   return (p[0][0] + (p[1]?.[0] ?? '')).toUpperCase()
 }
-const AV = [['var(--color-primary-lighter)', 'var(--color-primary-dark)'], ['var(--color-success-bg)', 'var(--color-success-dark)'], ['var(--color-warning-bg)', '#8a4b06'], ['var(--color-danger-bg)', 'var(--color-danger-dark)'], ['var(--color-info-bg)', 'var(--color-info-dark)']]
+const AV = [['var(--color-primary-lighter)', 'var(--color-primary-dark)'], ['var(--color-success-bg)', 'var(--color-success-dark)'], ['var(--color-warning-bg)', 'var(--color-warning-fg)'], ['var(--color-danger-bg)', 'var(--color-danger-dark)'], ['var(--color-info-bg)', 'var(--color-info-dark)']]
 export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
   let h = 0
   for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0

@@ -86,7 +86,7 @@ export function FormsCard({ rounds, loading, pendingTotal }: { rounds: DashRound
                     </span>
                     <span className="text-lg leading-6.5 font-bold text-heading">{spot.title}</span>
                     <span className="text-xs-plus leading-4.5 text-body-text">Deadline {date(spot.deadline)} · {spot.forms - spot.submitted} of {spot.forms} forms left</span>
-                    <Bar pct={(spot.submitted / spot.forms) * 100} color={progressColor((spot.submitted / spot.forms) * 100)} track="var(--color-white)" label={`${spot.title} forms submitted`} />
+                    <Bar pct={(spot.submitted / spot.forms) * 100} color={progressColor((spot.submitted / spot.forms) * 100)} track="var(--color-card)" label={`${spot.title} forms submitted`} />
                   </div>
                   <div role="timer" aria-label={`${cd.label} until ${spot.title} closes`} className="flex gap-2">
                     {cd.units.map(([v, l]) => (
