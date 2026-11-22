@@ -1,9 +1,7 @@
 import { useState } from 'react'
-import { CATEGORIES, category } from '../../data/dashboard'
-import { type CompletedRound, type Person } from '../../data/company'
+import { BANDS, bandOf, type CompletedRound, type Person } from '../../data/company'
 import { Card, Empty, Icon, Skel, TextLink } from '../dashboard/shared'
 
-const RANGES = ['90–100%', '75–89%', '60–74%', 'Below 60%']
 
 export function initials(name: string) {
   const p = name.trim().split(/\s+/)
@@ -61,14 +59,14 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
           </Empty>
         </div>
       ) : !round || !s ? (
-        <Empty icon="chart" title="No Completed Rounds Yet" text="When your first round closes, its score categories, department averages and top performers appear here." />
+        <Empty icon="chart" title="No Completed Rounds Yet" text="When your first round closes, its score bands, department averages and top performers appear here." />
       ) : (
         <div className="flex flex-col gap-5">
           <div className="flex min-w-0 flex-col gap-4 rounded-xl border border-grey-200 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="text-sm leading-5 font-semibold text-heading">{view === 'cats' ? 'Score Categories' : `Average Score by ${unitWord}`}</span>
+              <span className="text-sm leading-5 font-semibold text-heading">{view === 'cats' ? 'Score Bands' : `Average Score by ${unitWord}`}</span>
               <div role="group" aria-label="Chart" className="flex gap-0.5 rounded-lg bg-grey-150 p-0.5">
-                {([['cats', 'Categories'], ['units', `By ${unitWord}`]] as const).map(([k, l]) => (
+                {([['cats', 'Bands'], ['units', `By ${unitWord}`]] as const).map(([k, l]) => (
                   <button key={k} type="button" aria-pressed={view === k} onClick={() => setView(k)} className={`h-7 cursor-pointer rounded-md px-3 text-xs font-medium transition-colors ${view === k ? 'bg-white text-primary shadow-card' : 'text-light-text hover:text-body-text'}`}>{l}</button>
                 ))}
               </div>
@@ -76,16 +74,16 @@ export function ResultsCard({ rounds, team, loading, error, onRetry }: { rounds:
             {view === 'cats' ? (
               <Bars
                 key={`c-${round.id}-${team}`}
-                label={`People per score category in ${round.title}`}
+                label={`People per score band in ${round.title}`}
                 max={Math.max(...s.cats)}
-                items={CATEGORIES.map((c, i) => ({ key: c.key, value: s.cats[i], top: String(s.cats[i]), name: c.label, range: RANGES[i], color: c.color }))}
+                items={BANDS.map((b, i) => ({ key: b.key, value: s.cats[i], top: String(s.cats[i]), name: b.label, range: b.range, color: b.color }))}
               />
             ) : (
               <Bars
                 key={`u-${round.id}-${team}`}
                 label={`Average score by ${unitWord.toLowerCase()} in ${round.title}`}
                 max={100}
-                items={[...s.units].sort((a, b) => b[1] - a[1]).map(([n, v]) => ({ key: n, value: v, top: `${v}%`, name: n, range: category(v).label, color: category(v).color }))}
+                items={[...s.units].sort((a, b) => b[1] - a[1]).map(([n, v]) => ({ key: n, value: v, top: `${v}%`, name: n, range: bandOf(v).label, color: bandOf(v).color }))}
               />
             )}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-grey-200 pt-3.5 text-xs leading-4 text-light-text">
@@ -157,7 +155,7 @@ function PeopleList({ title, people, tone }: { title: string; people: Person[]; 
         <TextLink className="text-xs-plus">See All</TextLink>
       </div>
       {people.length === 0 ? (
-        <p className="px-2 py-3 text-xs-plus leading-4.5 text-light-text">{tone === 'bad' ? 'Nobody scored below 60% in this round.' : 'No scores yet.'}</p>
+        <p className="px-2 py-3 text-xs-plus leading-4.5 text-light-text">{tone === 'bad' ? 'Nobody scored below 50% in this round.' : 'No scores yet.'}</p>
       ) : (
         people.map((p, i) => (
           <a key={p.name} href="#" onClick={(e) => e.preventDefault()} className="flex items-center gap-2.5 rounded-lg p-2 transition-colors hover:bg-card">
@@ -167,7 +165,10 @@ function PeopleList({ title, people, tone }: { title: string; people: Person[]; 
               <span className="truncate text-sm leading-5 font-medium text-heading" title={p.name}>{p.name}</span>
               <span className="truncate text-xs leading-4 text-light-text">{p.job} · {p.evaluators} evaluators</span>
             </span>
-            <span className="text-sm leading-5 font-bold tabular-nums" style={{ color: c.fg }}>{p.score}%</span>
+            <span className="flex flex-col items-end">
+              <span className="text-sm leading-5 font-bold tabular-nums" style={{ color: bandOf(p.score).color }}>{p.score}%</span>
+              <span className="text-3xs leading-3 font-medium whitespace-nowrap" style={{ color: bandOf(p.score).color }}>{bandOf(p.score).label}</span>
+            </span>
           </a>
         ))
       )}

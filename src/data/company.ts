@@ -47,11 +47,26 @@ const R: Record<string, ActiveRound> = {
   ops: { id: 'ops', title: 'Operations Quarterly Review and Development Conversations for Regional Leads', covered: '1 Jul 2026 – 30 Sep 2026', start: -9, due: 30, company: { forms: 512, submitted: 233, participants: 64, evaluators: 37 } },
 }
 
+/* ---------- score bands ----------
+   Same bands, ranges and colours as the evaluation round results (Round Details v2, admin/v2/ui.tsx BANDS),
+   lowest first like the round results chart. The employee "My Dashboard" keeps its own categories. */
+export const BANDS = [
+  { key: 'unsat', label: 'Unsatisfactory', range: '0–34%', from: 0, color: '#ed1d4e' },
+  { key: 'dev', label: 'Developing', range: '35–49%', from: 35, color: '#d97706' },
+  { key: 'solid', label: 'Solid Performance', range: '50–64%', from: 50, color: '#2563eb' },
+  { key: 'strong', label: 'Strong', range: '65–79%', from: 65, color: '#00b2a1' },
+  { key: 'out', label: 'Outstanding', range: '80–100%', from: 80, color: '#06a700' },
+] as const
+export type Band = (typeof BANDS)[number]
+export const bandOf = (v: number): Band => [...BANDS].reverse().find((b) => v >= b.from) ?? BANDS[0]
+/** "Need attention" = Developing or Unsatisfactory (below 50%) */
+export const NEED_ATTENTION_BELOW = 50
+
 /* ---------- completed rounds ---------- */
 
 export type Person = { name: string; job: string; unit: string; score: number; evaluators: number }
-/** cats: people per score category, in CATEGORIES order (Exceptional, Exceeds, Meets, Needs Improvement) */
-export type ResultScope = { participants: number; avg: number; median: number; high: number; low: number; cats: [number, number, number, number]; units: [string, number][]; top: Person[]; low5: Person[] }
+/** cats: people per score band, in BANDS order (Unsatisfactory, Developing, Solid Performance, Strong, Outstanding) */
+export type ResultScope = { participants: number; avg: number; median: number; high: number; low: number; cats: [number, number, number, number, number]; units: [string, number][]; top: Person[]; low5: Person[] }
 export type CompletedRound = { id: string; title: string; short: string; covered: string; published: string; company: ResultScope; team: ResultScope }
 
 const TOP: Person[] = [
@@ -62,11 +77,11 @@ const TOP: Person[] = [
   { name: 'Nour Ibrahim', job: 'Mobile Engineer', unit: 'Engineering', score: 92, evaluators: 5 },
 ]
 const LOW: Person[] = [
-  { name: 'Ziad Rashad', job: 'Support Specialist', unit: 'Customer Success', score: 52, evaluators: 4 },
-  { name: 'Mariam Ali', job: 'Sales Associate', unit: 'Sales', score: 55, evaluators: 5 },
-  { name: 'Tamer Saad', job: 'Data Analyst', unit: 'Operations', score: 57, evaluators: 4 },
-  { name: 'Youssef Nabil', job: 'Frontend Engineer', unit: 'Engineering', score: 58, evaluators: 5 },
-  { name: 'Salma Adel', job: 'QC Engineer', unit: 'Engineering', score: 59, evaluators: 4 },
+  { name: 'Ziad Rashad', job: 'Support Specialist', unit: 'Customer Success', score: 31, evaluators: 4 },
+  { name: 'Mariam Ali', job: 'Sales Associate', unit: 'Sales', score: 38, evaluators: 5 },
+  { name: 'Tamer Saad', job: 'Data Analyst', unit: 'Operations', score: 42, evaluators: 4 },
+  { name: 'Youssef Nabil', job: 'Frontend Engineer', unit: 'Engineering', score: 45, evaluators: 5 },
+  { name: 'Salma Adel', job: 'QC Engineer', unit: 'Engineering', score: 48, evaluators: 4 },
 ]
 const TEAM_TOP: Person[] = [
   { name: 'Omar Khaled', job: 'Backend Engineer', unit: 'Backend Team', score: 95, evaluators: 6 },
@@ -74,26 +89,26 @@ const TEAM_TOP: Person[] = [
   { name: 'Karim Mostafa', job: 'Senior Mobile Engineer', unit: 'Mobile Team', score: 88, evaluators: 6 },
 ]
 const TEAM_LOW: Person[] = [
-  { name: 'Youssef Nabil', job: 'Frontend Engineer', unit: 'Mobile Team', score: 58, evaluators: 5 },
-  { name: 'Salma Adel', job: 'QC Engineer', unit: 'QA Team', score: 59, evaluators: 4 },
+  { name: 'Youssef Nabil', job: 'Frontend Engineer', unit: 'Mobile Team', score: 45, evaluators: 5 },
+  { name: 'Salma Adel', job: 'QC Engineer', unit: 'QA Team', score: 48, evaluators: 4 },
 ]
 const shift = (p: Person[], d: number) => p.map((x) => ({ ...x, score: x.score + d }))
 
 export const COMPLETED: CompletedRound[] = [
   {
     id: 'q2', title: 'Q2 2026 Performance Review', short: 'Q2 2026', covered: '1 Apr 2026 – 30 Jun 2026', published: '18 Jul 2026',
-    company: { participants: 137, avg: 76.4, median: 77, high: 97, low: 52, cats: [22, 66, 40, 9], units: [['Engineering', 74], ['Product', 79], ['Sales', 69], ['Customer Success', 81], ['Operations', 77], ['HR', 83], ['Finance', 72]], top: TOP, low5: LOW },
-    team: { participants: 18, avg: 78.2, median: 79, high: 95, low: 58, cats: [2, 10, 4, 2], units: [['Mobile Team', 80], ['Backend Team', 76], ['QA Team', 78]], top: TEAM_TOP, low5: TEAM_LOW },
+    company: { participants: 137, avg: 76.4, median: 77, high: 97, low: 31, cats: [3, 6, 27, 55, 46], units: [['Engineering', 74], ['Product', 79], ['Sales', 69], ['Customer Success', 81], ['Operations', 77], ['HR', 83], ['Finance', 72]], top: TOP, low5: LOW },
+    team: { participants: 18, avg: 78.2, median: 79, high: 95, low: 45, cats: [0, 2, 3, 7, 6], units: [['Mobile Team', 80], ['Backend Team', 76], ['QA Team', 78]], top: TEAM_TOP, low5: TEAM_LOW },
   },
   {
     id: 'q1', title: 'Q1 2026 Performance Review', short: 'Q1 2026', covered: '1 Jan 2026 – 31 Mar 2026', published: '16 Apr 2026',
-    company: { participants: 129, avg: 74.1, median: 75, high: 96, low: 49, cats: [18, 58, 41, 12], units: [['Engineering', 72], ['Product', 77], ['Sales', 66], ['Customer Success', 78], ['Operations', 75], ['HR', 80], ['Finance', 71]], top: shift(TOP, -1), low5: shift(LOW, -3) },
-    team: { participants: 17, avg: 75.9, median: 76, high: 93, low: 52, cats: [1, 9, 5, 2], units: [['Mobile Team', 77], ['Backend Team', 74], ['QA Team', 76]], top: shift(TEAM_TOP, -2), low5: shift(TEAM_LOW, -6) },
+    company: { participants: 129, avg: 74.1, median: 75, high: 96, low: 28, cats: [4, 8, 30, 52, 35], units: [['Engineering', 72], ['Product', 77], ['Sales', 66], ['Customer Success', 78], ['Operations', 75], ['HR', 80], ['Finance', 71]], top: shift(TOP, -1), low5: shift(LOW, -3) },
+    team: { participants: 17, avg: 75.9, median: 76, high: 93, low: 39, cats: [1, 1, 4, 6, 5], units: [['Mobile Team', 77], ['Backend Team', 74], ['QA Team', 76]], top: shift(TEAM_TOP, -2), low5: shift(TEAM_LOW, -6) },
   },
   {
     id: 'q4', title: 'Q4 2025 Performance Review', short: 'Q4 2025', covered: '1 Oct 2025 – 31 Dec 2025', published: '20 Jan 2026',
-    company: { participants: 121, avg: 73.0, median: 74, high: 95, low: 47, cats: [15, 52, 41, 13], units: [['Engineering', 71], ['Product', 75], ['Sales', 66], ['Customer Success', 76], ['Operations', 74], ['HR', 79], ['Finance', 70]], top: shift(TOP, -2), low5: shift(LOW, -5) },
-    team: { participants: 16, avg: 74.0, median: 75, high: 92, low: 51, cats: [1, 8, 5, 2], units: [['Mobile Team', 75], ['Backend Team', 73], ['QA Team', 74]], top: shift(TEAM_TOP, -3), low5: shift(TEAM_LOW, -7) },
+    company: { participants: 121, avg: 73.0, median: 74, high: 95, low: 26, cats: [4, 9, 31, 48, 29], units: [['Engineering', 71], ['Product', 75], ['Sales', 66], ['Customer Success', 76], ['Operations', 74], ['HR', 79], ['Finance', 70]], top: shift(TOP, -2), low5: shift(LOW, -5) },
+    team: { participants: 16, avg: 74.0, median: 75, high: 92, low: 38, cats: [1, 2, 4, 5, 4], units: [['Mobile Team', 75], ['Backend Team', 73], ['QA Team', 74]], top: shift(TEAM_TOP, -3), low5: shift(TEAM_LOW, -7) },
   },
 ]
 

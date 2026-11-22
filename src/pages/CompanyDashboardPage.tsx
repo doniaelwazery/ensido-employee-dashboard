@@ -1,7 +1,6 @@
 import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { category } from '../data/dashboard'
-import { COMPANY, dayStr, isoToOffset, offsetToIso, USERS, type CompanyScenario, type OverdueEvaluator, type Role } from '../data/company'
+import { bandOf, COMPANY, dayStr, isoToOffset, offsetToIso, USERS, type CompanyScenario, type OverdueEvaluator, type Role } from '../data/company'
 import { CountUp } from './dashboard/Hero'
 import { Dot, Icon, Ring, Skel } from './dashboard/shared'
 import { Dialog, Toast } from './company/Dialog'
@@ -116,8 +115,9 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
     else if (r.pending === 0 && admin)
       items.push({ id: `done-${r.id}`, sev: 'info', text: `Every form in ${r.title} is submitted. End the round to publish results.`, meta: 'Ready to close', action: 'End Round', onAction: () => setModal({ type: 'end', r }) })
   }
-  if (ls && !resErr && ls.cats[3] > 0)
-    items.push({ id: 'low', sev: 'warning', text: `${ls.cats[3]} ${team ? 'people in your teams' : 'employees'} scored below 60% in ${latest.title}.`, meta: 'Results published', action: 'Review Results', onAction: () => jump('co-results') })
+  const lowN = ls ? ls.cats[0] + ls.cats[1] : 0
+  if (ls && !resErr && lowN > 0)
+    items.push({ id: 'low', sev: 'warning', text: `${lowN} ${team ? 'people in your teams' : 'employees'} scored below 50% (Developing or Unsatisfactory) in ${latest.title}.`, meta: 'Results published', action: 'Review Results', onAction: () => jump('co-results') })
   if (admin && d.seats[0] / d.seats[1] >= 0.9)
     items.push({ id: 'seats', sev: 'warning', text: `You are using ${fmt(d.seats[0])} of ${fmt(d.seats[1])} seats. New employees can't be added once you reach the limit.`, meta: 'Seat limit', action: 'Manage Seats', onAction: () => {} })
   if (scenario === 'new' && admin)
@@ -283,7 +283,7 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose }: { scenari
 type Tile = { label: string; value: number; suffix: string; hint: string; dot: string; target: string; empty?: boolean }
 type Kpi = { label: string; value: string; note: string; delta?: number }
 function CompanyHero({ team, title, subtitle, summary, urgent, tiles, kpis, kpiErr, onRetryKpi, loading, jump, latest }: { team: boolean; title: string; subtitle: string; summary: string; urgent: boolean; tiles: Tile[]; kpis: Kpi[]; kpiErr: boolean; onRetryKpi: () => void; loading: boolean; jump: (id: string) => void; latest: { avg: number; short: string; delta: number | null; prevShort?: string } | null }) {
-  const cat = latest ? category(latest.avg) : null
+  const cat = latest ? bandOf(latest.avg) : null
   const tile = 'rise group relative flex cursor-pointer flex-col gap-1.5 rounded-xl border border-grey-200 bg-card px-4 py-3.5 text-left shadow-card transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary-light hover:shadow-focus-card'
   return (
     <section aria-labelledby="co-hero-title" className="relative overflow-hidden rounded-2xl border border-primary-light bg-card" style={{ backgroundImage: 'linear-gradient(120deg, var(--color-row-hover) 0%, var(--color-primary-lighter) 55%, var(--color-row-hover) 100%)' }}>
