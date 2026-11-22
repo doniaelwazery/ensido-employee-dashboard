@@ -1,0 +1,170 @@
+// Company Dashboard sample data (Super Admin = whole company, Manager = their teams only).
+// Finalized from the PM draft "Ensido Dashboards › Company Dashboard" (Claude canvas), aligned with My Dashboard:
+// same "today" (Mon 12 Oct 2026), same rounds, same company (Acme Corporation), same score categories.
+
+export type Role = 'employee' | 'manager' | 'admin'
+export type CompanyScenario = 'typical' | 'busy' | 'one' | 'none' | 'first' | 'new'
+
+export const TODAY = new Date(2026, 9, 12)
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+/** Date `offset` days from today, e.g. "14 Oct 2026". */
+export const dayStr = (offset: number, year = true) => {
+  const d = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + offset)
+  return `${d.getDate()} ${MON[d.getMonth()]}${year ? ` ${d.getFullYear()}` : ''}`
+}
+export const isoToOffset = (iso: string) => {
+  const [y, m, d] = iso.split('-').map(Number)
+  return Math.round((new Date(y, m - 1, d).getTime() - TODAY.getTime()) / 86400000)
+}
+export const offsetToIso = (offset: number) => {
+  const d = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate() + offset)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** Scope numbers for one round: the whole company, or (team) only the manager's teams. */
+export type RoundScope = { forms: number; submitted: number; participants: number; evaluators: number }
+export type ActiveRound = {
+  id: string
+  title: string
+  covered: string
+  /** days from today: start is in the past (negative), due < 0 means the deadline has passed */
+  start: number
+  due: number
+  reminded?: number
+  company: RoundScope
+  /** missing = the manager's teams are not part of this round, so a manager doesn't see it */
+  team?: RoundScope
+}
+
+const R: Record<string, ActiveRound> = {
+  sales: { id: 'sales', title: 'Sales Mid-Year Check-in', covered: '1 Jan 2026 – 30 Jun 2026', start: -24, due: -3, reminded: -4, company: { forms: 448, submitted: 371, participants: 56, evaluators: 19 } },
+  eng360: { id: 'eng360', title: 'Engineering 360 Feedback', covered: '1 Jul 2026 – 30 Sep 2026', start: -10, due: 2, company: { forms: 234, submitted: 96, participants: 38, evaluators: 24 }, team: { forms: 72, submitted: 30, participants: 12, evaluators: 8 } },
+  q3: { id: 'q3', title: 'Q3 2026 Performance Review', covered: '1 Jul 2026 – 30 Sep 2026', start: -6, due: 8, reminded: -3, company: { forms: 1269, submitted: 812, participants: 142, evaluators: 63 }, team: { forms: 156, submitted: 111, participants: 18, evaluators: 11 } },
+  probation: { id: 'probation', title: 'Probation Review, September Joiners', covered: '1 Sep 2026 – 30 Sep 2026', start: -4, due: 13, company: { forms: 42, submitted: 9, participants: 14, evaluators: 8 }, team: { forms: 6, submitted: 2, participants: 2, evaluators: 2 } },
+  hiring: { id: 'hiring', title: 'Hiring Panel Feedback', covered: '1 Sep 2026 – 30 Sep 2026', start: -12, due: 5, company: { forms: 27, submitted: 27, participants: 9, evaluators: 0 }, team: { forms: 9, submitted: 9, participants: 3, evaluators: 0 } },
+  lead180: { id: 'lead180', title: 'Leadership 180', covered: '1 Jan 2026 – 30 Sep 2026', start: -8, due: 16, reminded: -2, company: { forms: 88, submitted: 51, participants: 22, evaluators: 12 } },
+  cs: { id: 'cs', title: 'Customer Success Pulse', covered: '1 Jul 2026 – 30 Sep 2026', start: -2, due: 24, company: { forms: 124, submitted: 18, participants: 31, evaluators: 20 } },
+  ops: { id: 'ops', title: 'Operations Quarterly Review and Development Conversations for Regional Leads', covered: '1 Jul 2026 – 30 Sep 2026', start: -9, due: 30, company: { forms: 512, submitted: 233, participants: 64, evaluators: 37 } },
+}
+
+/* ---------- completed rounds ---------- */
+
+export type Person = { name: string; job: string; unit: string; score: number; evaluators: number }
+/** cats: people per score category, in CATEGORIES order (Exceptional, Exceeds, Meets, Needs Improvement) */
+export type ResultScope = { participants: number; avg: number; median: number; high: number; low: number; cats: [number, number, number, number]; units: [string, number][]; top: Person[]; low5: Person[] }
+export type CompletedRound = { id: string; title: string; short: string; covered: string; published: string; company: ResultScope; team: ResultScope }
+
+const TOP: Person[] = [
+  { name: 'Laila Gamal', job: 'Product Designer', unit: 'Product', score: 97, evaluators: 7 },
+  { name: 'Omar Khaled', job: 'Backend Engineer', unit: 'Engineering', score: 95, evaluators: 6 },
+  { name: 'Hana Tarek', job: 'Account Manager', unit: 'Customer Success', score: 94, evaluators: 5 },
+  { name: 'Abdelrahman Mohamed El-Sayed Abdelaziz', job: 'Regional Operations Lead', unit: 'Operations', score: 93, evaluators: 8 },
+  { name: 'Nour Ibrahim', job: 'Mobile Engineer', unit: 'Engineering', score: 92, evaluators: 5 },
+]
+const LOW: Person[] = [
+  { name: 'Ziad Rashad', job: 'Support Specialist', unit: 'Customer Success', score: 52, evaluators: 4 },
+  { name: 'Mariam Ali', job: 'Sales Associate', unit: 'Sales', score: 55, evaluators: 5 },
+  { name: 'Tamer Saad', job: 'Data Analyst', unit: 'Operations', score: 57, evaluators: 4 },
+  { name: 'Youssef Nabil', job: 'Frontend Engineer', unit: 'Engineering', score: 58, evaluators: 5 },
+  { name: 'Salma Adel', job: 'QC Engineer', unit: 'Engineering', score: 59, evaluators: 4 },
+]
+const TEAM_TOP: Person[] = [
+  { name: 'Omar Khaled', job: 'Backend Engineer', unit: 'Backend Team', score: 95, evaluators: 6 },
+  { name: 'Nour Ibrahim', job: 'Mobile Engineer', unit: 'Mobile Team', score: 92, evaluators: 5 },
+  { name: 'Karim Mostafa', job: 'Senior Mobile Engineer', unit: 'Mobile Team', score: 88, evaluators: 6 },
+]
+const TEAM_LOW: Person[] = [
+  { name: 'Youssef Nabil', job: 'Frontend Engineer', unit: 'Mobile Team', score: 58, evaluators: 5 },
+  { name: 'Salma Adel', job: 'QC Engineer', unit: 'QA Team', score: 59, evaluators: 4 },
+]
+const shift = (p: Person[], d: number) => p.map((x) => ({ ...x, score: x.score + d }))
+
+export const COMPLETED: CompletedRound[] = [
+  {
+    id: 'q2', title: 'Q2 2026 Performance Review', short: 'Q2 2026', covered: '1 Apr 2026 – 30 Jun 2026', published: '18 Jul 2026',
+    company: { participants: 137, avg: 76.4, median: 77, high: 97, low: 52, cats: [22, 66, 40, 9], units: [['Engineering', 74], ['Product', 79], ['Sales', 69], ['Customer Success', 81], ['Operations', 77], ['HR', 83], ['Finance', 72]], top: TOP, low5: LOW },
+    team: { participants: 18, avg: 78.2, median: 79, high: 95, low: 58, cats: [2, 10, 4, 2], units: [['Mobile Team', 80], ['Backend Team', 76], ['QA Team', 78]], top: TEAM_TOP, low5: TEAM_LOW },
+  },
+  {
+    id: 'q1', title: 'Q1 2026 Performance Review', short: 'Q1 2026', covered: '1 Jan 2026 – 31 Mar 2026', published: '16 Apr 2026',
+    company: { participants: 129, avg: 74.1, median: 75, high: 96, low: 49, cats: [18, 58, 41, 12], units: [['Engineering', 72], ['Product', 77], ['Sales', 66], ['Customer Success', 78], ['Operations', 75], ['HR', 80], ['Finance', 71]], top: shift(TOP, -1), low5: shift(LOW, -3) },
+    team: { participants: 17, avg: 75.9, median: 76, high: 93, low: 52, cats: [1, 9, 5, 2], units: [['Mobile Team', 77], ['Backend Team', 74], ['QA Team', 76]], top: shift(TEAM_TOP, -2), low5: shift(TEAM_LOW, -6) },
+  },
+  {
+    id: 'q4', title: 'Q4 2025 Performance Review', short: 'Q4 2025', covered: '1 Oct 2025 – 31 Dec 2025', published: '20 Jan 2026',
+    company: { participants: 121, avg: 73.0, median: 74, high: 95, low: 47, cats: [15, 52, 41, 13], units: [['Engineering', 71], ['Product', 75], ['Sales', 66], ['Customer Success', 76], ['Operations', 74], ['HR', 79], ['Finance', 70]], top: shift(TOP, -2), low5: shift(LOW, -5) },
+    team: { participants: 16, avg: 74.0, median: 75, high: 92, low: 51, cats: [1, 8, 5, 2], units: [['Mobile Team', 75], ['Backend Team', 73], ['QA Team', 74]], top: shift(TEAM_TOP, -3), low5: shift(TEAM_LOW, -7) },
+  },
+]
+
+/* ---------- people ---------- */
+
+export type Joiner = { name: string; job: string; joined: number }
+export type OverdueEvaluator = { id: string; name: string; unit: string; manager: string; forms: number; rounds: string[]; since: number }
+
+const JOINERS: Joiner[] = [
+  { name: 'Dina Essam', job: 'HR Specialist', joined: -4 },
+  { name: 'Amr Magdy', job: 'Backend Engineer', joined: -7 },
+  { name: 'Reem Hany', job: 'Product Manager', joined: -14 },
+  { name: 'Sherif Fouad', job: 'QC Engineer', joined: -18 },
+  { name: 'Nada Elsayed', job: 'Account Manager', joined: -26 },
+]
+const OVERDUE: OverdueEvaluator[] = [
+  { id: 'o1', name: 'Omar Khaled', unit: 'Engineering', manager: 'Ahmed Fathy', forms: 9, rounds: ['eng360', 'q3'], since: -10 },
+  { id: 'o2', name: 'Mariam Ali', unit: 'Sales', manager: 'Dalia Mansour', forms: 8, rounds: ['sales'], since: -24 },
+  { id: 'o3', name: 'Karim Mostafa', unit: 'Engineering', manager: 'Ahmed Fathy', forms: 7, rounds: ['eng360', 'q3'], since: -10 },
+  { id: 'o4', name: 'Hana Tarek', unit: 'Customer Success', manager: 'Sara Nabil', forms: 6, rounds: ['q3'], since: -6 },
+  { id: 'o5', name: 'Tamer Saad', unit: 'Operations', manager: 'Hesham Adel', forms: 5, rounds: ['q3'], since: -6 },
+  { id: 'o6', name: 'Youssef Nabil', unit: 'Engineering', manager: 'Ahmed Fathy', forms: 5, rounds: ['eng360'], since: -10 },
+]
+/** Completion by department (company) / team (manager): base % per unit, nudged per round */
+const UNITS_CO: [string, number][] = [['Engineering', 52], ['Product', 78], ['Sales', 41], ['Customer Success', 69], ['Operations', 88], ['HR', 95], ['Finance', 74]]
+const UNITS_TEAM: [string, number][] = [['Mobile Team', 61], ['Backend Team', 48], ['QA Team', 83]]
+
+/* ---------- setup ---------- */
+
+export type SetupStep = { name: string; done: number; total: number }
+const STEPS = ['Organization structure', 'Job titles and levels', 'Employees', 'Competencies', 'Relations and work groups']
+const steps = (s: [number, number][]): SetupStep[] => s.map(([done, total], i) => ({ name: STEPS[i], done, total }))
+
+/* ---------- scenarios ---------- */
+
+export type CompanyData = {
+  rounds: ActiveRound[]
+  completed: CompletedRound[]
+  setup: SetupStep[]
+  joiners: Joiner[]
+  overdue: OverdueEvaluator[]
+  employees: number
+  employeesDelta: number
+  completedCount: number
+  newJoiners: number
+  newJoinersDelta: number
+  seats: [number, number]
+  team: { members: number; delta: number; newJoiners: number }
+}
+
+const FULL_SETUP = steps([[3, 3], [3, 3], [2, 2], [4, 4], [4, 4]])
+const MOST_SETUP = steps([[3, 3], [3, 3], [2, 2], [4, 4], [2, 4]])
+const base = { completed: COMPLETED, setup: MOST_SETUP, joiners: JOINERS, overdue: OVERDUE, employees: 248, employeesDelta: 12, completedCount: 11, newJoiners: 14, newJoinersDelta: -3, seats: [248, 250] as [number, number], team: { members: 18, delta: 2, newJoiners: 2 } }
+
+export const COMPANY: Record<CompanyScenario, CompanyData> = {
+  typical: { ...base, rounds: [R.sales, R.eng360, R.q3] },
+  busy: { ...base, setup: FULL_SETUP, rounds: [R.sales, R.eng360, R.q3, R.probation, R.hiring, R.lead180, R.cs, R.ops] },
+  one: { ...base, rounds: [R.q3], overdue: OVERDUE.filter((o) => o.rounds.includes('q3')).map((o) => ({ ...o, rounds: ['q3'], since: -6 })) },
+  none: { ...base, rounds: [], overdue: [] },
+  first: { ...base, rounds: [R.q3], completed: [], completedCount: 0, overdue: OVERDUE.filter((o) => o.rounds.includes('q3')).map((o) => ({ ...o, rounds: ['q3'], since: -6 })) },
+  new: { ...base, rounds: [], completed: [], setup: steps([[3, 3], [1, 3], [0, 2], [0, 4], [0, 4]]), joiners: [], overdue: [], employees: 1, employeesDelta: 0, completedCount: 0, newJoiners: 1, newJoinersDelta: 0, seats: [1, 50] },
+}
+
+export const unitCompletion = (roundId: string, team: boolean) => {
+  const off: Record<string, number> = { sales: 6, eng360: -8, q3: 0, probation: -20, hiring: 30, lead180: 0, cs: -40, ops: -10 }
+  const units = team ? UNITS_TEAM : UNITS_CO
+  return units.map(([name, v], i) => [name, Math.max(6, Math.min(100, v + (off[roundId] ?? 0) + ((i * 7) % 9) - 4))] as [string, number])
+}
+
+export const USERS: Record<Role, { name: string; role: string; avatar?: string }> = {
+  employee: { name: 'Ahmed Samy', role: 'Employee', avatar: '/assets/avatar-ahmed.png' },
+  manager: { name: 'Ahmed Fathy', role: 'Engineering Manager' },
+  admin: { name: 'Rania Samir', role: 'Super Admin' },
+}

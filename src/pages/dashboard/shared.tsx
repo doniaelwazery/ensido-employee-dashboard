@@ -52,6 +52,8 @@ export const PATHS = {
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8h.01" /></>,
   check: <path d="M5 12l5 5 9-10" />,
   alert: <><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></>,
+  more: <><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></>,
+  close: <path d="M6 6l12 12M18 6L6 18" />,
 }
 export function Icon({ name, size = 16, color = 'currentColor', sw = 2, className }: { name: keyof typeof PATHS; size?: number; color?: string; sw?: number; className?: string }) {
   return (

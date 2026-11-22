@@ -5,7 +5,7 @@ import { Dot, type Hist, Icon, Ring, Skel } from './shared'
 /* ---------- Hero ---------- */
 
 
-export function Hero({ summary, tiles, history, loading, jump }: { summary: string; tiles: { label: string; value: number; hint: string; dot: string; target: string }[]; history: Hist[]; loading: boolean; jump: (id: string) => void }) {
+export function Hero({ name = 'Ahmed', summary, tiles, history, loading, jump }: { name?: string; summary: string; tiles: { label: string; value: number; hint: string; dot: string; target: string }[]; history: Hist[]; loading: boolean; jump: (id: string) => void }) {
   const latest = history[0]
   const prev = history[1]
   const cat = latest ? category(latest.v) : null
@@ -54,7 +54,7 @@ export function Hero({ summary, tiles, history, loading, jump }: { summary: stri
       <div className="relative flex min-w-0 flex-1 flex-col gap-5">
         <div className="flex flex-col gap-1.5">
           <p className="rise text-xs leading-4 text-primary-light">Monday, 12 October 2026</p>
-          <h2 id="hero-title" className="rise text-display leading-9 font-bold" style={{ animationDelay: '80ms' }}>Good morning, Ahmed</h2>
+          <h2 id="hero-title" className="rise text-display leading-9 font-bold" style={{ animationDelay: '80ms' }}>Good morning, {name}</h2>
           {loading ? <Skel className="my-1 h-3 w-96 max-w-full bg-white/15" /> : <p className="rise max-w-140 text-sm leading-5 text-grey-200" style={{ animationDelay: '160ms' }}>{summary}</p>}
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

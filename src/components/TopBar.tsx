@@ -2,7 +2,7 @@ type TopBarProps = {
   /** Opens the navigation drawer (below the lg breakpoint the sidebar is off-canvas). */
   onMenu?: () => void
   /** Signed-in user. */
-  user: { name: string; role: string; avatar: string }
+  user: { name: string; role: string; avatar?: string }
 }
 
 export function TopBar({ onMenu, user }: TopBarProps) {
@@ -21,7 +21,13 @@ export function TopBar({ onMenu, user }: TopBarProps) {
               <p className="text-sm leading-5 text-body-text">{user.name}</p>
               <p className="text-xs leading-4.5 text-light-text">{user.role}</p>
             </div>
-            <img className="size-10 shrink-0 rounded-lg object-cover" src={user.avatar} alt={user.name} width={40} height={40} />
+            {user.avatar ? (
+              <img className="size-10 shrink-0 rounded-lg object-cover" src={user.avatar} alt={user.name} width={40} height={40} />
+            ) : (
+              <span role="img" aria-label={user.name} className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary-lighter text-sm font-semibold text-primary-dark">
+                {user.name.split(' ').map((p) => p[0]).join('').slice(0, 2)}
+              </span>
+            )}
             <img className="hidden sm:block" src="/assets/chevron-down.svg" alt="" width={24} height={24} />
           </div>
         </div>

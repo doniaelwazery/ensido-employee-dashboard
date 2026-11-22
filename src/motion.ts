@@ -2,7 +2,7 @@
  * Starts chart animations (.fill-x bars, .dash-ring rings, .reveal containers) only once they are
  * properly on screen, so charts below the fold build up while the user is looking at them.
  */
-const SELECTOR = '.fill-x, .dash-ring, .reveal'
+const SELECTOR = '.fill-x, .dash-ring, .reveal, .grow-y'
 
 // Reloads start at the top instead of jumping back down mid-page (which would play charts during loading).
 history.scrollRestoration = 'manual'

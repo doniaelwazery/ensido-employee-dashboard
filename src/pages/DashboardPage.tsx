@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { PageTitle } from '../components/PageTitle'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { COMPANY_OVERVIEW, DASHBOARD, HISTORY_META, MANY_KPI_LIST, type Scenario } from '../data/dashboard'
 import { CompetencyCard } from './dashboard/CompetencyCard'
 import { DistributionCard } from './dashboard/DistributionCard'
@@ -17,7 +16,7 @@ import { Card, Chip, Empty, Icon, Skel, TextLink, goalFlag, goalRank } from './d
 
 /* ---------- page ---------- */
 
-export function DashboardPage() {
+export function DashboardPage({ name, rolePicker }: { name?: string; rolePicker?: ReactNode }) {
   // ?scenario=new|busy|first opens a data scenario directly (shareable prototype links)
   const [scenario, setScenarioRaw] = useState<Scenario>(() => {
     const q = new URLSearchParams(location.search).get('scenario')
@@ -46,17 +45,15 @@ export function DashboardPage() {
 
   return (
     <div className="flex flex-col">
-      {/* Figma: the hero sits directly under the 60px page title (no extra gap) */}
-      <PageTitle title="Dashboard" />
-      <Controls scenario={scenario} setScenario={setScenario} loading={loading} reload={() => load(1200)} fail={fail} setFail={setFail} many={many} setMany={setMany} />
+      <Controls rolePicker={rolePicker} scenario={scenario} setScenario={setScenario} loading={loading} reload={() => load(1200)} fail={fail} setFail={setFail} many={many} setMany={setMany} />
       <div className="flex flex-col gap-6">
-        <Board key={scenario} data={d} loading={loading} notesFail={fail && !loading} onRetry={() => { setFail(false); load(700) }} />
+        <Board key={scenario} name={name} data={d} loading={loading} notesFail={fail && !loading} onRetry={() => { setFail(false); load(700) }} />
       </div>
     </div>
   )
 }
 
-function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOARD)[Scenario]; loading: boolean; notesFail: boolean; onRetry: () => void }) {
+function Board({ name, data: d, loading, notesFail, onRetry }: { name?: string; data: (typeof DASHBOARD)[Scenario]; loading: boolean; notesFail: boolean; onRetry: () => void }) {
   /* rounds: pending first, then nearest deadline */
   const rounds = useMemo(() => [...d.rounds].sort((a, b) => Number(a.forms === a.submitted) - Number(b.forms === b.submitted) || a.days - b.days), [d.rounds])
   const pendingTotal = rounds.reduce((s, r) => s + r.forms - r.submitted, 0)
@@ -87,7 +84,7 @@ function Board({ data: d, loading, notesFail, onRetry }: { data: (typeof DASHBOA
     <>
       {loading && <span role="status" className="sr-only">Loading your dashboard</span>}
 
-      <Hero summary={d.summary} tiles={tiles} history={history} loading={loading} jump={jump} />
+      <Hero name={name} summary={d.summary} tiles={tiles} history={history} loading={loading} jump={jump} />
 
       <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[minmax(0,1.79fr)_minmax(0,1fr)]">
         <FormsCard rounds={rounds} loading={loading} pendingTotal={pendingTotal} />

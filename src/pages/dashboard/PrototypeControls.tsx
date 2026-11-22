@@ -1,15 +1,16 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { type Scenario } from '../../data/dashboard'
 
 /* ---------- prototype controls ---------- */
 
-export function Controls({ scenario, setScenario, loading, reload, fail, setFail, many, setMany }: { scenario: Scenario; setScenario: (s: Scenario) => void; loading: boolean; reload: () => void; fail: boolean; setFail: (v: boolean) => void; many: boolean; setMany: (v: boolean) => void }) {
+export function Controls({ rolePicker, scenario, setScenario, loading, reload, fail, setFail, many, setMany }: { rolePicker?: ReactNode; scenario: Scenario; setScenario: (s: Scenario) => void; loading: boolean; reload: () => void; fail: boolean; setFail: (v: boolean) => void; many: boolean; setMany: (v: boolean) => void }) {
   const opts: [Scenario, string][] = [['typical', 'Typical'], ['new', 'New Employee'], ['busy', 'Heavy Use'], ['first', 'First Round']]
   const [open, setOpen] = useState(false)
   return (
     <div role="region" aria-label="Prototype controls" className="fixed right-4 bottom-4 z-40 flex max-w-[calc(100vw-2rem)] flex-col items-end gap-2">
       {open && (
       <div className="menu-in flex w-85 max-w-full flex-col items-start gap-3 rounded-lg bg-secondary p-4 text-sm leading-5 text-white shadow-tooltip">
+      {rolePicker}
       <span className="font-medium">Data scenario</span>
       <div role="group" aria-label="Data scenario" className="flex flex-wrap gap-1 rounded-lg bg-white/10 p-1">
         {opts.map(([id, label]) => (
