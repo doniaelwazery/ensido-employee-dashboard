@@ -70,7 +70,7 @@ export function SetupCard({ steps, canHide, onHide }: { steps: SetupStep[]; canH
         </Ring>
         <p className="text-xs-plus leading-4.5 text-body-text">Rounds stay accurate when every employee has a manager, a job title and competencies.</p>
       </div>
-      <ol className="flex flex-col">
+      <ol className="flex flex-1 flex-col justify-around">
         {steps.map((s) => {
           const ok = s.done >= s.total
           const prog = !ok && s.done > 0
