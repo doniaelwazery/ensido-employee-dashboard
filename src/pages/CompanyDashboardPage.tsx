@@ -164,12 +164,19 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
     const fixedMain = total(live.filter((c) => c.col === 'main').map((c) => c.id))
     const fixedSide = total(live.filter((c) => c.col === 'side').map((c) => c.id))
     const floats = live.filter((c) => c.col === 'float').map((c) => c.id)
+    // cards whose chart can grow to absorb leftover height (max ~140px looks natural)
+    const ELASTIC = ['trends', 'completion']
     let best: Record<string, 'main' | 'side'> = {}
     let bestDiff = Infinity
     for (let m = 0; m < 1 << floats.length; m++) {
       const pick: Record<string, 'main' | 'side'> = {}
       floats.forEach((id, i) => (pick[id] = m & (1 << i) ? 'main' : 'side'))
-      const diff = Math.abs(fixedMain + total(floats.filter((id) => pick[id] === 'main')) - fixedSide - total(floats.filter((id) => pick[id] === 'side')))
+      const mainH = fixedMain + total(floats.filter((id) => pick[id] === 'main'))
+      const sideH = fixedSide + total(floats.filter((id) => pick[id] === 'side'))
+      const shorter = mainH < sideH ? 'main' : 'side'
+      const lastOfShorter = live.filter((c) => (c.col === 'float' ? pick[c.id] : c.col) === shorter).at(-1)?.id ?? ''
+      // the insights card reads best in the wide column
+      const diff = Math.max(0, Math.abs(mainH - sideH) - (ELASTIC.includes(lastOfShorter) ? 140 : 0)) + (pick.insights === 'side' ? 60 : 0)
       if (diff < bestDiff - 1) {
         bestDiff = diff
         best = pick
@@ -307,7 +314,7 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
         cards={[
           { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} /> },
           { id: 'attention', col: 'side', node: <AttentionCard items={items} loading={loading} /> },
-          { id: 'insights', col: 'main', node: !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} /> },
+          { id: 'insights', col: 'float', node: !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} /> },
           { id: 'results', col: 'main', node: <ResultsCard rounds={d.completed} team={team} loading={loading} error={resErr} onRetry={() => setFixed((f) => ({ ...f, res: true }))} /> },
           { id: 'setup', col: 'side', node: admin && !loading && setupOpen && !setupHidden && <SetupCard steps={d.setup} canHide={scenario !== 'new'} onHide={() => setSetupHidden(true)} /> },
           {

@@ -13,8 +13,8 @@ export function TrendsCard({ rows, team }: { rows: [string, number, number][]; t
         <Empty icon="chart" title="Trends Appear After Two Rounds" text="Once two rounds have closed, you can compare average scores and participation over time here." />
       ) : (
         <>
-          <div role="img" aria-label={`Average score per round: ${rows.map(([q, v, p]) => `${q} ${v}% with ${p}% participation`).join(', ')}`} className="flex flex-col gap-2">
-            <div className="relative h-40">
+          <div role="img" aria-label={`Average score per round: ${rows.map(([q, v, p]) => `${q} ${v}% with ${p}% participation`).join(', ')}`} className="flex flex-1 flex-col gap-2">
+            <div className="relative max-h-80 min-h-40 flex-1">
               {[0, 25, 50, 75, 100].map((g) => <span key={g} aria-hidden="true" className="absolute inset-x-0 border-t border-dashed border-grey-200" style={{ bottom: `${g}%` }} />)}
               <div className="absolute inset-0 flex items-end gap-3 px-1">
                 {rows.map(([q, v], i) => (
@@ -82,8 +82,8 @@ export function MoversCard({ up, down, from, to }: { up: Mover[]; down: Mover[];
     </div>
   )
   return (
-    <Card id="co-movers" title="Biggest Movers" sub={`${from} → ${to}`} gap="gap-4">
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-1">
+    <Card id="co-movers" title="Biggest Movers" sub={`${from} → ${to}`} gap="gap-4" className="@container">
+      <div className="grid grid-cols-1 gap-5 @lg:grid-cols-2">
         {col('Most Improved', up, true)}
         {col('Biggest Declines', down, false)}
       </div>
@@ -120,7 +120,7 @@ export type Insight = { tone: 'critical' | 'good' | 'warning'; text: string; lin
 export function AiInsightsCard({ insights, source, jump }: { insights: Insight[]; source: string; jump: (id: string) => void }) {
   const dot = { critical: 'var(--color-danger)', good: 'var(--color-success)', warning: 'var(--color-warning)' }
   return (
-    <section aria-labelledby="co-ai" className="relative flex flex-col gap-4 overflow-hidden rounded-xl border-2 border-ai-accent/40 bg-card p-6">
+    <section aria-labelledby="co-ai" className="@container relative flex flex-col gap-4 overflow-hidden rounded-xl border-2 border-ai-accent/40 bg-card p-6">
       <span aria-hidden="true" className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full opacity-25 blur-3xl" style={{ background: 'radial-gradient(closest-side, #ff2c2c, #8f00ff, transparent)' }} />
       <div className="relative flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -139,7 +139,7 @@ export function AiInsightsCard({ insights, source, jump }: { insights: Insight[]
           Ask a Follow-up
         </button>
       </div>
-      <div className={`relative grid grid-cols-1 gap-3 ${insights.length >= 3 ? 'md:grid-cols-3' : insights.length === 2 ? 'md:grid-cols-2' : ''}`}>
+      <div className={`relative grid grid-cols-1 gap-3 ${insights.length >= 3 ? '@2xl:grid-cols-3' : insights.length === 2 ? '@lg:grid-cols-2' : ''}`}>
         {insights.map((x, i) => (
           <div key={i} className="rise flex flex-col justify-between gap-3 rounded-tile border border-grey-200 bg-grey-light p-4" style={{ animationDelay: `${120 + i * 80}ms` }}>
             <p className="flex gap-2.5 text-sm leading-5 text-heading">
