@@ -141,7 +141,10 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
   const live = cards.map((c, i) => ({ ...c, order: i })).filter((c) => c.node)
   const ref = useRef<HTMLDivElement>(null)
   const [place, setPlace] = useState<Record<string, 'main' | 'side'>>({})
-  const [measuring, setMeasuring] = useState(true)
+  // measuring phases: floats rendered in the side column, then in the main column (heights differ by width), then placed
+  const [phase, setPhase] = useState<'side' | 'main' | 'done'>('side')
+  const measuring = phase !== 'done'
+  const hSide = useRef<Record<string, number>>({})
   const [width, setWidth] = useState(() => window.innerWidth)
   useEffect(() => {
     let t = 0
@@ -152,42 +155,46 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
     window.addEventListener('resize', on)
     return () => window.removeEventListener('resize', on)
   }, [])
-  useLayoutEffect(() => setMeasuring(true), [balanceKey, width])
+  useLayoutEffect(() => setPhase('side'), [balanceKey, width])
   useLayoutEffect(() => {
-    if (!measuring) return
+    if (phase === 'done') return
     const el = ref.current
-    if (!el || !matchMedia('(min-width: 1280px)').matches) return setMeasuring(false)
+    if (!el || !matchMedia('(min-width: 1280px)').matches) return setPhase('done')
     const h: Record<string, number> = {}
     el.querySelectorAll<HTMLElement>('[data-card]').forEach((n) => (h[n.dataset.card!] = n.getBoundingClientRect().height))
+    if (phase === 'side') {
+      hSide.current = h
+      return setPhase('main')
+    }
+    const hMain = h // floats measured at main width now; pinned cards are the same in both passes
     const GAP = 24
-    const total = (ids: string[]) => ids.reduce((s, id) => s + (h[id] ?? 0) + GAP, 0)
-    const fixedMain = total(live.filter((c) => c.col === 'main').map((c) => c.id))
-    const fixedSide = total(live.filter((c) => c.col === 'side').map((c) => c.id))
+    const height = (id: string, col: 'main' | 'side') => (col === 'main' ? hMain[id] : hSide.current[id]) ?? 0
     const floats = live.filter((c) => c.col === 'float').map((c) => c.id)
-    // cards whose chart can grow to absorb leftover height (max ~140px looks natural)
+    // cards whose chart can grow to absorb leftover height (~140px still looks natural)
     const ELASTIC = ['trends', 'completion']
     let best: Record<string, 'main' | 'side'> = {}
-    let bestDiff = Infinity
+    let bestCost = Infinity
     for (let m = 0; m < 1 << floats.length; m++) {
       const pick: Record<string, 'main' | 'side'> = {}
       floats.forEach((id, i) => (pick[id] = m & (1 << i) ? 'main' : 'side'))
-      const mainH = fixedMain + total(floats.filter((id) => pick[id] === 'main'))
-      const sideH = fixedSide + total(floats.filter((id) => pick[id] === 'side'))
+      const colOfId = (c: ColCard) => (c.col === 'float' ? pick[c.id] : c.col)
+      const sum = (col: 'main' | 'side') => live.filter((c) => colOfId(c) === col).reduce((s, c) => s + height(c.id, col) + GAP, 0)
+      const mainH = sum('main')
+      const sideH = sum('side')
       const shorter = mainH < sideH ? 'main' : 'side'
-      const lastOfShorter = live.filter((c) => (c.col === 'float' ? pick[c.id] : c.col) === shorter).at(-1)?.id ?? ''
-      // the insights card reads best in the wide column
-      const diff = Math.max(0, Math.abs(mainH - sideH) - (ELASTIC.includes(lastOfShorter) ? 140 : 0)) + (pick.insights === 'side' ? 60 : 0)
-      if (diff < bestDiff - 1) {
-        bestDiff = diff
+      const lastOfShorter = live.filter((c) => colOfId(c) === shorter).at(-1)?.id ?? ''
+      const cost = Math.max(0, Math.abs(mainH - sideH) - (ELASTIC.includes(lastOfShorter) ? 140 : 0)) + (pick.insights === 'side' ? 200 : 0)
+      if (cost < bestCost - 1) {
+        bestCost = cost
         best = pick
       }
     }
     setPlace(best)
-    setMeasuring(false)
+    setPhase('done')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [measuring])
+  }, [phase])
 
-  const colOf = (c: (typeof live)[number]) => (c.col === 'float' ? (place[c.id] ?? 'side') : c.col)
+  const colOf = (c: (typeof live)[number]) => (c.col === 'float' ? (phase === 'side' ? 'side' : phase === 'main' ? 'main' : (place[c.id] ?? 'side')) : c.col)
   const wrap = (c: (typeof live)[number]) => (
     <div key={c.id} data-card={c.id} className={`${ORD[c.order]} flex min-w-0 flex-col *:flex-1 xl:order-none`}>
       {c.node}
