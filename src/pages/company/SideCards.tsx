@@ -100,11 +100,17 @@ export function SetupCard({ steps, canHide, onHide }: { steps: SetupStep[]; canH
 
 /* ---------- Recently Joined ---------- */
 
-export function JoinersCard({ joiners, loading, admin, you }: { joiners: Joiner[]; loading: boolean; admin: boolean; you: { name: string; role: string } }) {
+export function JoinersCard({ joiners, loading, admin, you, error, onRetry }: { joiners: Joiner[]; loading: boolean; admin: boolean; you: { name: string; role: string }; error?: boolean; onRetry?: () => void }) {
   return (
-    <Card title="Recently Joined" aside={joiners.length > 0 && !loading && <TextLink>View All Employees</TextLink>} gap="gap-1" busy={loading}>
+    <Card title="Recently Joined" aside={joiners.length > 0 && !loading && !error && <TextLink>View All Employees</TextLink>} gap="gap-1" busy={loading}>
       {loading ? (
         [0, 1, 2, 3].map((i) => <Skel key={i} className="my-1.5 h-9" />)
+      ) : error ? (
+        <div role="alert">
+          <Empty icon="alert" tone="grey" title="Could Not Load Recent Employees" text="Something went wrong. Please try again.">
+            <button type="button" onClick={onRetry} className="mt-2 h-9 cursor-pointer rounded-lg border border-primary bg-white px-4 text-sm font-medium text-primary hover:bg-body-bg">Try Again</button>
+          </Empty>
+        </div>
       ) : joiners.length === 0 ? (
         <>
           <div className="flex items-center gap-3 py-2">

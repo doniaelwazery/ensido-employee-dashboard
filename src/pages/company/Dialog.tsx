@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Icon, type PATHS } from '../dashboard/shared'
 
 type Tone = 'primary' | 'warning' | 'danger'
@@ -22,7 +23,7 @@ export function Dialog({ icon, tone = 'primary', title, children, confirm, onCon
     }
   }, [onClose])
   const t = TONES[tone]
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div aria-hidden="true" onClick={onClose} className="absolute inset-0 bg-secondary/50" />
       <div ref={ref} role="dialog" aria-modal="true" aria-labelledby="dlg-title" className="menu-in relative flex w-110 max-w-full flex-col gap-5 rounded-xl bg-card p-6 shadow-tooltip">
@@ -40,7 +41,8 @@ export function Dialog({ icon, tone = 'primary', title, children, confirm, onCon
           <button type="button" data-confirm onClick={onConfirm} disabled={disabled} className={`h-10 cursor-pointer rounded-lg px-4 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${t.btn}`}>{confirm}</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

@@ -137,12 +137,13 @@ Employees never see the tabs.
 ### Sections (top to bottom)
 | Section | Super Admin | Manager |
 |---|---|---|
-| Trial banner (dismissible) | when on trial | — |
+| Account banner: free trial, cancellation scheduled, subscription expired, trial expired, suspended (PM texts) | ✓ | — |
+| Welcome modal (first login on a trial: Subscribe Now / Maybe Later) | ✓ | — |
 | Company header: name, status line, 4 tiles, key numbers band | whole company | "Your Teams", team numbers |
 | Active Evaluation Rounds: spotlight + list, View All Rounds | Remind (End Round when all forms are in); ⋯ menu is the same on every running round: Edit Round / End Round / Cancel Round | Remind only; rounds without their teams are hidden |
 | Needs Your Attention (rules in `items`) | overdue, closing <3 days & <80%, all submitted, low scores, seats ≥90%, setup, no people, idle | overdue, closing soon, low scores |
 | ensidoMate Insights (Beta) | 1–3 insights, each links to a section | team insights |
-| Latest Round Results: picker, published notice, bands / by department, Top Performers + Need Attention | company | team |
+| Latest Round Results: picker, published notice, chart views Bands / By Department / Distribution (actual line + normal curve) / Competencies (this vs previous round), Top Performers + Need Attention, See All → Performance Snapshot drawer (tabs) | company | team |
 | Finish Setting Up (Hide for Now → "Continue Setup" link), Setup Gaps | ✓ | — |
 | Recently Joined | company | their teams |
 | Trends Across Rounds (needs ≥2 rounds) + Biggest Movers | ✓ | ✓ team |
@@ -151,7 +152,9 @@ Employees never see the tabs.
 ### Cases (Prototype › Scenarios)
 Typical (3 rounds, 1 overdue) · Heavy Use (8 rounds, long names, setup complete) · One Round · No Active Rounds ·
 First Round (no results yet) · New Company (Super Admin only: empty states, setup 1/5, trial) · Loading ·
-Key numbers + results fail (Try Again) · Trial banner · Light / Dark / System theme.
+Sections that fail (key numbers / active rounds / results / recently joined / all, each with Try Again) · Account banner ·
+Welcome modal · No permission ("You don’t have access…", also `&access=none`) · Light / Dark / System theme.
+Every PM section is in the default (Proposed) layout; Arabic and the build-notes overlay were left out by PM decision.
 
 ### Score bands (same as evaluation round results)
 Unsatisfactory 0–34 `#ed1d4e` · Developing 35–49 `#d97706` · Solid Performance 50–64 `#2563eb` · Strong 65–79 `#00b2a1` ·

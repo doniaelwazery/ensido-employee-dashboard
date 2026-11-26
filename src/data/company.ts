@@ -112,6 +112,31 @@ export const COMPLETED: CompletedRound[] = [
   },
 ]
 
+/** Competency averages per completed round (PM "Radar" view, shown here as vertical bars). Index = COMPLETED order. */
+export const COMPETENCIES = ['Communication', 'Teamwork and Collaboration', 'Problem Solving', 'Ownership and Accountability', 'Customer Focus', 'Leadership', 'Technical Excellence', 'Adaptability']
+const COMP_CO = [[78, 82, 74, 71, 80, 68, 76, 65], [74, 79, 72, 70, 77, 66, 73, 63], [71, 76, 70, 69, 75, 64, 70, 61], [69, 74, 68, 67, 73, 62, 68, 60]]
+const COMP_TEAM_D = [3, 1, 4, 5, -2, 2, 3, 1]
+export const competencyScores = (idx: number, team: boolean) => {
+  const row = (i: number) => (COMP_CO[i] ?? COMP_CO[COMP_CO.length - 1]).map((v, k) => (team ? v + COMP_TEAM_D[k] : v))
+  return { cur: row(idx), prev: idx + 1 < COMPLETED.length ? row(idx + 1) : null }
+}
+
+/** People per 5-point score range (25–100), built from the round's average so the bars add up to everyone evaluated. */
+export const scoreBins = (r: ResultScope) => {
+  const lo = 25, w = 5, n = 15, sd = 12
+  const dens = Array.from({ length: n }, (_, i) => {
+    const x = lo + i * w + w / 2
+    return Math.exp(-(((x - r.avg) / sd) ** 2) / 2)
+  })
+  const sum = dens.reduce((a, b) => a + b, 0)
+  const wobble = [0, 1, -1, 0, 1, 0, -1, 1, 0, -1, 1, 0, 0, -1, 0]
+  const counts = dens.map((d, i) => Math.max(0, Math.round((d / sum) * r.participants) + (d / sum > 0.04 ? wobble[i] : 0)))
+  const diff = r.participants - counts.reduce((a, b) => a + b, 0)
+  counts[counts.indexOf(Math.max(...counts))] += diff
+  const expected = dens.map((d) => (d / sum) * r.participants)
+  return counts.map((c, i) => ({ from: lo + i * w, to: lo + (i + 1) * w, count: c, expected: expected[i] }))
+}
+
 /* ---------- people ---------- */
 
 export type Joiner = { name: string; job: string; joined: number }

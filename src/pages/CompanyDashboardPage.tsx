@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { bandOf, COMPANY, dayStr, MOVERS, TRENDS, isoToOffset, offsetToIso, USERS, type CompanyScenario, type OverdueEvaluator, type Role } from '../data/company'
 import { CountUp } from './dashboard/Hero'
-import { Dot, Icon, Ring, Skel, TextLink } from './dashboard/shared'
+import { Dot, Icon, Ring, Skel } from './dashboard/shared'
 import { Dialog, Toast } from './company/Dialog'
 import { ResultsCard } from './company/ResultsCard'
 import { dueText, RoundsCard, type RoundVM } from './company/RoundsCard'
@@ -22,8 +22,10 @@ export function CompanyDashboardPage({ role, rolePicker }: { role: Exclude<Role,
   // A manager only exists once the company is set up, so "New Company" is a Super Admin case.
   const sc: CompanyScenario = role === 'manager' && scenario === 'new' ? 'typical' : scenario
   const [loading, setLoading] = useState(true)
-  const [fail, setFail] = useState(false)
-  const [trial, setTrial] = useState(sc === 'new')
+  const [fail, setFail] = useState<Fail>('none')
+  const [banner, setBanner] = useState<BannerKind>(sc === 'new' ? 'trial' : 'none')
+  const [welcome, setWelcome] = useState(sc === 'new')
+  const [noAccess, setNoAccess] = useState(() => new URLSearchParams(location.search).get('access') === 'none')
   const timer = useRef<number | undefined>(undefined)
   const load = useCallback((ms: number) => {
     window.clearTimeout(timer.current)
@@ -36,7 +38,8 @@ export function CompanyDashboardPage({ role, rolePicker }: { role: Exclude<Role,
   }, [load, role])
   const setScenario = (s: CompanyScenario) => {
     setScenarioRaw(s)
-    setTrial(s === 'new')
+    setBanner(s === 'new' ? 'trial' : 'none')
+    setWelcome(s === 'new')
     load(700)
   }
   // UX review: "proposed" (lean, fixed layout) vs "current" (everything, self-balancing). ?layout=current shows the old one.
@@ -51,15 +54,32 @@ export function CompanyDashboardPage({ role, rolePicker }: { role: Exclude<Role,
 
   return (
     <div className="flex flex-col gap-6">
-      <CompanyControls role={role} rolePicker={rolePicker} scenario={sc} setScenario={setScenario} loading={loading} reload={() => load(1200)} fail={fail} setFail={setFail} trial={trial} setTrial={setTrial} lean={lean} setLean={setLean} />
-      <Board key={`${sc}-${role}-${lean}`} scenario={sc} role={role} loading={loading} fail={fail} trial={trial && role === 'admin'} onTrialClose={() => setTrial(false)} lean={lean} />
+      <CompanyControls role={role} rolePicker={rolePicker} scenario={sc} setScenario={setScenario} loading={loading} reload={() => load(1200)} fail={fail} setFail={setFail} banner={banner} setBanner={setBanner} onWelcome={() => setWelcome(true)} noAccess={noAccess} setNoAccess={setNoAccess} lean={lean} setLean={setLean} />
+      {noAccess ? (
+        <NoAccess />
+      ) : (
+        <Board key={`${sc}-${role}-${lean}-${fail}`} scenario={sc} role={role} loading={loading} fail={fail} banner={role === 'admin' ? banner : 'none'} onBannerClose={() => setBanner('none')} lean={lean} />
+      )}
+      {welcome && role === 'admin' && !loading && !noAccess && <WelcomeModal onClose={() => setWelcome(false)} />}
     </div>
   )
 }
 
 type Modal = { type: 'remind' | 'edit' | 'end' | 'cancel'; r: RoundVM } | null
+/** Which sections fail to load (PM "Error States": overview = key numbers, rounds, results, people = Recently Joined) */
+type Fail = 'none' | 'overview' | 'rounds' | 'results' | 'people' | 'all'
+const FAILS: [Fail, string][] = [['none', 'None'], ['overview', 'Key numbers'], ['rounds', 'Active rounds'], ['results', 'Results'], ['people', 'Recently joined'], ['all', 'All']]
+/** Account status banners (PM, Super Admin / owner only) */
+type BannerKind = 'none' | 'trial' | 'pendingCancel' | 'canceled' | 'trialExpired' | 'suspended'
+const BANNERS: Record<Exclude<BannerKind, 'none'>, { tone: 'info' | 'warning' | 'danger'; kicker: string; title: string; text: string; count: string; countLabel: string; action: string; menu: string }> = {
+  trial: { tone: 'info', kicker: 'Free trial', title: 'Your free plan expires in 9 days', text: 'Subscribe now and start managing your workspace seamlessly.', count: '9', countLabel: 'days left', action: 'Subscribe Now', menu: 'Free trial' },
+  pendingCancel: { tone: 'warning', kicker: 'Cancellation scheduled', title: 'Your subscription plan is scheduled to be cancelled on 6 Nov 2026', text: 'Your subscription will be cancelled in 25 days. Undo now to keep it active.', count: '25', countLabel: 'days left', action: 'Undo Cancellation', menu: 'Cancellation scheduled' },
+  canceled: { tone: 'danger', kicker: 'Access restricted', title: 'Your subscription expired on 9 Oct 2026', text: 'Renew your subscription within 22 days (before 3 Nov 2026) to regain full access.', count: '22', countLabel: 'days to deletion', action: 'Renew Subscription', menu: 'Subscription expired' },
+  trialExpired: { tone: 'danger', kicker: 'Access restricted', title: 'Your free trial expired on 9 Oct 2026', text: 'Your team can\u2019t sign in. Subscribe now to restore access. We keep your data until 3 Nov 2026, then it is deleted permanently.', count: '22', countLabel: 'days to deletion', action: 'Subscribe Now', menu: 'Trial expired' },
+  suspended: { tone: 'danger', kicker: 'Account suspended', title: 'Access to the portal is temporarily restricted.', text: 'You\u2019ve added 6 more employees than your plan allows. Add extra seats or delete the additional employees to regain access.', count: '6', countLabel: 'over the limit', action: 'Add Extra Seats', menu: 'Suspended' },
+}
 
-function Board({ scenario, role, loading, fail, trial, onTrialClose, lean }: { scenario: CompanyScenario; role: Exclude<Role, 'employee'>; loading: boolean; fail: boolean; trial: boolean; onTrialClose: () => void; lean: boolean }) {
+function Board({ scenario, role, loading, fail, banner, onBannerClose, lean }: { scenario: CompanyScenario; role: Exclude<Role, 'employee'>; loading: boolean; fail: Fail; banner: BannerKind; onBannerClose: () => void; lean: boolean }) {
   const d = COMPANY[scenario]
   const admin = role === 'admin'
   const team = role === 'manager'
@@ -71,7 +91,7 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose, lean }: { s
   const [reminded, setReminded] = useState<Record<string, number>>({})
   const [evReminded, setEvReminded] = useState<Record<string, boolean>>({})
   const [setupHidden, setSetupHidden] = useState(false)
-  const [fixed, setFixed] = useState({ kpi: false, res: false })
+  const [fixed, setFixed] = useState({ kpi: false, res: false, rounds: false, people: false })
   const [modal, setModal] = useState<Modal>(null)
   const [date, setDate] = useState('')
   const [toast, setToastRaw] = useState<string | null>(null)
@@ -103,8 +123,11 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose, lean }: { s
     [d.rounds, ended, deadlines, reminded, team],
   )
 
-  const kpiErr = fail && !fixed.kpi
-  const resErr = fail && !fixed.res
+  const failed = (k: Exclude<Fail, 'none' | 'all'>) => fail === k || fail === 'all'
+  const kpiErr = failed('overview') && !fixed.kpi
+  const resErr = failed('results') && !fixed.res
+  const roundsErr = failed('rounds') && !fixed.rounds
+  const peopleErr = failed('people') && !fixed.people
   const latest = d.completed[0]
   const ls = latest ? (team ? latest.team : latest.company) : null
   const ps = d.completed[1] ? (team ? d.completed[1].team : d.completed[1].company) : null
@@ -134,10 +157,6 @@ function Board({ scenario, role, loading, fail, trial, onTrialClose, lean }: { s
     items.push({ id: 'people', sev: 'info', text: 'Add or import your team so you can start your first evaluation round.', meta: 'Only you so far', action: 'Add Employees', onAction: () => {} })
   if (setupOpen)
     items.push({ id: 'setup', sev: 'info', text: 'Finish setting up your company so rounds run smoothly.', meta: `${setupDone} of ${d.setup.length} done`, action: 'Continue Setup', onAction: () => { setSetupHidden(false); window.setTimeout(() => jump('co-setup'), 50) } })
-  // proposed layout: setup gaps are to-dos, so they live here instead of in their own card
-  if (lean && admin && scenario !== 'new')
-    for (const g of d.gaps)
-      items.push({ id: `gap-${g.label}`, sev: g.sev, text: `${g.count} ${g.label.charAt(0).toLowerCase()}${g.label.slice(1)}.`, meta: 'Setup gap', action: g.action, onAction: () => {} })
   if (admin && rounds.length === 0 && d.completed.length > 0)
     items.push({ id: 'idle', sev: 'info', text: `No round is running. The last round closed and was published on ${latest.published}.`, meta: 'No active rounds', action: 'Start Evaluation Round', onAction: () => {} })
   const rank = { critical: 0, warning: 1, info: 2 }
@@ -341,12 +360,12 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
     if (team) {
       if (has360) insights.push({ tone: 'critical', text: 'Backend Team has submitted the fewest forms in Engineering 360 Feedback, and it closes in 2 days.', link: 'See pending evaluators', target: 'co-evaluators' })
       if (latest) insights.push({ tone: 'good', text: `Mobile Team has the highest average of your teams (80%) in ${latest.short}.`, link: 'Open results by team', target: 'co-results' })
-      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: `Youssef Nabil and Salma Adel both dropped about 10 points since ${d.completed[1].short}.`, link: lean ? 'Open full results' : 'Review biggest movers', target: lean ? 'co-results' : 'co-movers' })
+      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: `Youssef Nabil and Salma Adel both dropped about 10 points since ${d.completed[1].short}.`, link: 'Review biggest movers', target: 'co-movers' })
     } else {
       if (hasQ3) insights.push({ tone: 'critical', text: 'Engineering is 12 points behind the company in Q3 2026 Performance Review completion. 3 evaluators hold 21 of its pending forms.', link: 'See pending evaluators', target: 'co-evaluators' })
       else if (latest) insights.push({ tone: 'good', text: `${latest.short} closed with 95% participation, the highest in the last six rounds.`, link: 'Open trends', target: 'co-trends' })
       if (latest) insights.push({ tone: 'good', text: `Customer Success has the highest department average (81%) in ${latest.short}, up 3 points.`, link: 'Open results by department', target: 'co-results' })
-      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: '3 employees declined two rounds in a row, and all three report to the same manager.', link: lean ? 'Open full results' : 'Review biggest movers', target: lean ? 'co-results' : 'co-movers' })
+      if (d.completed.length >= 2) insights.push({ tone: 'warning', text: '3 employees declined two rounds in a row, and all three report to the same manager.', link: 'Review biggest movers', target: 'co-movers' })
       if (!latest && first) insights.push({ tone: 'warning', text: `Your first results arrive when ${first.title} closes on ${first.deadline}. ${first.pct}% of forms are in so far.`, link: 'Open the round', target: 'co-rounds' })
     }
   }
@@ -372,23 +391,16 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
     <>
       {loading && <span role="status" className="sr-only">Loading the company dashboard</span>}
 
-      {trial && !loading && (
-        <div role="note" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-warning-stroke bg-warning-bg px-5 py-3">
-          <Icon name="info" size={18} color="var(--color-warning-fg)" />
-          <p className="min-w-0 flex-1 text-sm leading-5 text-heading"><span className="font-semibold">Your trial ends in 9 days.</span> Upgrade to keep evaluating without interruption.</p>
-          <TextLink arrow>Upgrade Plan</TextLink>
-          <button type="button" aria-label="Dismiss" onClick={onTrialClose} className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-light-text hover:bg-white/60"><Icon name="close" /></button>
-        </div>
-      )}
+      {banner !== 'none' && !loading && <AccountBanner kind={banner} onClose={banner === 'trial' || banner === 'pendingCancel' ? onBannerClose : undefined} />}
 
       <CompanyHero
         team={team}
         title={team ? 'Your Teams' : 'Trianglz'}
-        subtitle={team ? 'Engineering · Mobile, Backend and QA teams · 18 employees' : `Company overview · ${fmt(d.employees)} employee${d.employees === 1 ? '' : 's'}${lean ? ` · ${fmt(d.seats[0])} of ${fmt(d.seats[1])} seats used` : ''}`}
+        subtitle={team ? 'Engineering · Mobile, Backend and QA teams · 18 employees' : `Company overview · ${fmt(d.employees)} employee${d.employees === 1 ? '' : 's'}`}
         summary={summary}
         urgent={items.some((i) => i.sev === 'critical')}
         tiles={tiles}
-        kpis={lean ? [] : kpis}
+        kpis={kpis}
         kpiErr={kpiErr}
         onRetryKpi={() => setFixed((f) => ({ ...f, kpi: true }))}
         loading={loading}
@@ -405,7 +417,7 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
       <Columns
         balanceKey={`${scenario}-${role}-${loading}-${rounds.length}-${insights.length}-${setupOpen}-${setupHidden}-${lean}`}
         cards={lean ? [
-          { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} /> },
+          { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} error={roundsErr} onRetry={() => setFixed((f) => ({ ...f, rounds: true }))} /> },
           { id: 'attention', col: 'side', node: <AttentionCard items={items} loading={loading} /> },
           { id: 'insights', col: 'main', node: !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} /> },
           { id: 'setup', col: 'side', node: admin && !loading && setupOpen && !setupHidden && <SetupCard steps={d.setup} canHide={scenario !== 'new'} onHide={() => setSetupHidden(true)} /> },
@@ -416,13 +428,16 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
               </button>
             ),
           },
-          { id: 'evaluators', col: 'float', node: !loading && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} /> },
+          { id: 'evaluators', col: 'float', node: !loading && !roundsErr && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} /> },
           { id: 'results', col: 'main', node: <ResultsCard rounds={d.completed} team={team} loading={loading} error={resErr} onRetry={() => setFixed((f) => ({ ...f, res: true }))} /> },
-          { id: 'joiners', col: 'float', node: <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} /> },
+          { id: 'joiners', col: 'float', node: <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} error={peopleErr} onRetry={() => setFixed((f) => ({ ...f, people: true }))} /> },
+          { id: 'gaps', col: 'side', node: admin && !loading && scenario !== 'new' && <GapsCard gaps={d.gaps} /> },
+          { id: 'movers', col: 'float', node: !loading && d.completed.length >= 2 && <MoversCard up={(team ? MOVERS.team : MOVERS.company).up} down={(team ? MOVERS.team : MOVERS.company).down} from={d.completed[1].short} to={d.completed[0].short} /> },
+          { id: 'completion', col: 'float', node: !loading && !roundsErr && rounds.length > 0 && <CompletionCard key={rounds.map((r) => r.id).join()} rounds={rounds.filter((r) => r.pending > 0).length ? rounds.filter((r) => r.pending > 0) : rounds} team={team} /> },
           { id: 'quick', col: 'side', node: !loading && scenario !== 'new' && <QuickActionsCard actions={quick} /> },
           { id: 'trends', col: 'side', node: !loading && scenario !== 'new' && <TrendsCard rows={d.completed.length >= 2 ? (team ? TRENDS.team : TRENDS.company) : []} team={team} /> },
         ] : [
-          { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} /> },
+          { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} error={roundsErr} onRetry={() => setFixed((f) => ({ ...f, rounds: true }))} /> },
           { id: 'attention', col: 'side', node: <AttentionCard items={items} loading={loading} /> },
           { id: 'insights', col: 'float', node: !loading && insights.length > 0 && <AiInsightsCard insights={insights} source={`From ${[first ? 'your active rounds' : '', latest ? `${latest.short} results` : ''].filter(Boolean).join(' and ')}${team ? ' · your teams only' : ''}`} jump={jump} /> },
           { id: 'results', col: 'main', node: <ResultsCard rounds={d.completed} team={team} loading={loading} error={resErr} onRetry={() => setFixed((f) => ({ ...f, res: true }))} /> },
@@ -434,12 +449,12 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
               </button>
             ),
           },
-          { id: 'joiners', col: 'float', node: <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} /> },
+          { id: 'joiners', col: 'float', node: <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} error={peopleErr} onRetry={() => setFixed((f) => ({ ...f, people: true }))} /> },
           { id: 'gaps', col: 'side', node: admin && !loading && scenario !== 'new' && <GapsCard gaps={d.gaps} /> },
           { id: 'trends', col: 'float', node: !loading && scenario !== 'new' && <TrendsCard rows={d.completed.length >= 2 ? (team ? TRENDS.team : TRENDS.company) : []} team={team} /> },
           { id: 'movers', col: 'float', node: !loading && d.completed.length >= 2 && <MoversCard up={(team ? MOVERS.team : MOVERS.company).up} down={(team ? MOVERS.team : MOVERS.company).down} from={d.completed[1].short} to={d.completed[0].short} /> },
-          { id: 'evaluators', col: 'main', node: !loading && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} /> },
-          { id: 'completion', col: 'float', node: !loading && rounds.length > 0 && <CompletionCard key={rounds.map((r) => r.id).join()} rounds={rounds.filter((r) => r.pending > 0).length ? rounds.filter((r) => r.pending > 0) : rounds} team={team} /> },
+          { id: 'evaluators', col: 'main', node: !loading && !roundsErr && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} /> },
+          { id: 'completion', col: 'float', node: !loading && !roundsErr && rounds.length > 0 && <CompletionCard key={rounds.map((r) => r.id).join()} rounds={rounds.filter((r) => r.pending > 0).length ? rounds.filter((r) => r.pending > 0) : rounds} team={team} /> },
         ]}
       />
 
@@ -598,7 +613,7 @@ function CompanyHero({ team, title, subtitle, summary, urgent, tiles, kpis, kpiE
 
 /* ---------- prototype controls ---------- */
 
-function CompanyControls({ role, rolePicker, scenario, setScenario, loading, reload, fail, setFail, trial, setTrial, lean, setLean }: { role: Exclude<Role, 'employee'>; rolePicker: ReactNode; scenario: CompanyScenario; setScenario: (s: CompanyScenario) => void; loading: boolean; reload: () => void; fail: boolean; setFail: (v: boolean) => void; trial: boolean; setTrial: (v: boolean) => void; lean: boolean; setLean: (v: boolean) => void }) {
+function CompanyControls({ role, rolePicker, scenario, setScenario, loading, reload, fail, setFail, banner, setBanner, onWelcome, noAccess, setNoAccess, lean, setLean }: { role: Exclude<Role, 'employee'>; rolePicker: ReactNode; scenario: CompanyScenario; setScenario: (s: CompanyScenario) => void; loading: boolean; reload: () => void; fail: Fail; setFail: (v: Fail) => void; banner: BannerKind; setBanner: (v: BannerKind) => void; onWelcome: () => void; noAccess: boolean; setNoAccess: (v: boolean) => void; lean: boolean; setLean: (v: boolean) => void }) {
   const [open, setOpen] = useState(false)
   const opts = SCENARIOS.filter(([s]) => role === 'admin' || s !== 'new')
   return (
@@ -623,13 +638,26 @@ function CompanyControls({ role, rolePicker, scenario, setScenario, loading, rel
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></svg>
             Reload Dashboard
           </button>
-          <label className="flex cursor-pointer items-center gap-2">
-            <input type="checkbox" checked={fail} onChange={(e) => setFail(e.target.checked)} className="size-4 accent-primary" /> Key numbers and results fail to load
+          <label className="flex w-full items-center justify-between gap-3">
+            <span className="font-medium">Sections that fail to load</span>
+            <select value={fail} onChange={(e) => setFail(e.target.value as Fail)} className="h-8 cursor-pointer rounded-md bg-white/10 px-2 text-sm text-white [&>option]:text-heading">
+              {FAILS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
           </label>
           {role === 'admin' && (
-            <label className="flex cursor-pointer items-center gap-2">
-              <input type="checkbox" checked={trial} onChange={(e) => setTrial(e.target.checked)} className="size-4 accent-primary" /> Trial ending banner
+            <label className="flex w-full items-center justify-between gap-3">
+              <span className="font-medium">Account banner</span>
+              <select value={banner} onChange={(e) => setBanner(e.target.value as BannerKind)} className="h-8 cursor-pointer rounded-md bg-white/10 px-2 text-sm text-white [&>option]:text-heading">
+                <option value="none">None</option>
+                {(Object.keys(BANNERS) as Exclude<BannerKind, 'none'>[]).map((k) => <option key={k} value={k}>{BANNERS[k].menu}</option>)}
+              </select>
             </label>
+          )}
+          <label className="flex cursor-pointer items-center gap-2">
+            <input type="checkbox" checked={noAccess} onChange={(e) => setNoAccess(e.target.checked)} className="size-4 accent-primary" /> No permission to view the Company Dashboard
+          </label>
+          {role === 'admin' && (
+            <button type="button" onClick={onWelcome} className="flex h-8 cursor-pointer items-center rounded-md border border-primary-light px-3 text-sm font-medium hover:bg-white/10">Show Welcome Modal</button>
           )}
           <span role="status" className="text-xs leading-4 text-primary-light">{loading ? 'Loading data…' : 'Try Remind, the ⋯ menu (Edit, End, Cancel), the results round picker and chart toggle.'}</span>
         </div>
@@ -644,3 +672,74 @@ function CompanyControls({ role, rolePicker, scenario, setScenario, loading, rel
   )
 }
 
+
+/* ---------- account status banner (PM: trial, cancellation scheduled, expired, trial expired, suspended) ---------- */
+function AccountBanner({ kind, onClose }: { kind: Exclude<BannerKind, 'none'>; onClose?: () => void }) {
+  const b = BANNERS[kind]
+  const t = {
+    info: { bg: 'var(--color-info-bg)', stroke: 'var(--color-info-stroke)', fg: 'var(--color-info-dark)', solid: 'var(--color-info)' },
+    warning: { bg: 'var(--color-warning-bg)', stroke: 'var(--color-warning-stroke)', fg: 'var(--color-warning-fg)', solid: 'var(--color-warning)' },
+    danger: { bg: 'var(--color-danger-bg)', stroke: 'var(--color-danger-stroke)', fg: 'var(--color-danger-dark)', solid: 'var(--color-danger)' },
+  }[b.tone]
+  return (
+    <section role={b.tone === 'danger' ? 'alert' : 'region'} aria-label="Account status" className="flex flex-wrap items-center gap-x-5 gap-y-3 rounded-xl border px-5 py-4" style={{ background: t.bg, borderColor: t.stroke }}>
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg" style={{ background: t.solid }}>
+        <Icon name={b.tone === 'info' ? 'info' : 'alert'} size={20} color="var(--color-white)" />
+      </span>
+      <div className="flex min-w-0 flex-1 basis-80 flex-col gap-0.5">
+        <span className="text-2xs leading-3.5 font-semibold tracking-wide uppercase" style={{ color: t.fg }}>{b.kicker}</span>
+        <p className="text-sm leading-5 font-semibold text-heading">{b.title}</p>
+        <p className="text-xs-plus leading-4.5 text-body-text">{b.text}</p>
+      </div>
+      <span className="flex flex-col items-center rounded-lg border bg-card px-3.5 py-1.5" style={{ borderColor: t.stroke }}>
+        <span className="text-lg leading-6 font-bold" style={{ color: t.fg }}>{b.count}</span>
+        <span className="text-3xs leading-3 whitespace-nowrap text-light-text">{b.countLabel}</span>
+      </span>
+      <button type="button" className={`h-10 cursor-pointer rounded-lg px-4 text-sm font-semibold text-white transition-colors ${b.tone === 'danger' ? 'bg-danger hover:brightness-90' : 'bg-primary hover:bg-primary-dark'}`}>{b.action}</button>
+      {onClose && <button type="button" aria-label="Dismiss" onClick={onClose} className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-light-text hover:bg-white/60"><Icon name="close" /></button>}
+    </section>
+  )
+}
+
+/* ---------- first login on a free trial (PM welcome modal) ---------- */
+function WelcomeModal({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', key)
+    return () => window.removeEventListener('keydown', key)
+  }, [onClose])
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div aria-hidden="true" onClick={onClose} className="absolute inset-0 bg-secondary/50" />
+      <div role="dialog" aria-modal="true" aria-labelledby="welcome-title" className="menu-in relative flex w-120 max-w-full flex-col items-center gap-4 overflow-hidden rounded-xl bg-card px-8 pt-10 pb-7 text-center shadow-tooltip">
+        <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-primary-lighter to-transparent" />
+        <img src="/assets/logo-mark.svg" alt="" width={44} height={48} className="relative" />
+        <h2 id="welcome-title" className="relative text-xl leading-7 font-bold text-heading">Welcome to Ensido!</h2>
+        <p className="relative max-w-95 text-sm leading-5 text-body-text">You’re on a free trial with full access. Subscribe now to keep full access once your trial ends.</p>
+        <div className="relative mt-2 flex w-full flex-col gap-2.5 sm:flex-row-reverse">
+          <button type="button" onClick={onClose} className="h-11 flex-1 cursor-pointer rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-primary-lg hover:bg-primary-dark">Subscribe Now</button>
+          <button type="button" autoFocus onClick={onClose} className="h-11 flex-1 cursor-pointer rounded-lg border border-border bg-white px-4 text-sm font-medium text-body-text hover:bg-grey-light">Maybe Later</button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+/* ---------- no "View Company Dashboard" permission ---------- */
+function NoAccess() {
+  const toMy = () => {
+    const u = new URL(location.href)
+    u.searchParams.set('view', 'my')
+    u.searchParams.delete('access')
+    location.href = u.toString()
+  }
+  return (
+    <section className="flex flex-col items-center gap-3 rounded-xl border border-grey-200 bg-card px-6 py-16 text-center">
+      <span className="flex size-14 items-center justify-center rounded-full border border-grey-200 bg-grey-150"><Icon name="eye" size={24} color="var(--color-light-text)" /></span>
+      <h2 className="text-lg leading-6.5 font-semibold text-heading">You don’t have access to the Company Dashboard</h2>
+      <p className="max-w-110 text-sm leading-5 text-light-text">The Company Dashboard needs the “View Company Dashboard” permission. Ask your Super Admin if you need it.</p>
+      <button type="button" onClick={toMy} className="mt-2 h-10 cursor-pointer rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark">Go to My Dashboard</button>
+    </section>
+  )
+}

@@ -30,14 +30,14 @@ export const dueTone = (r: RoundVM) =>
         : { bg: 'var(--color-info-bg)', stroke: 'var(--color-info-stroke)', fg: 'var(--color-info-dark)' }
 const fmt = (n: number) => n.toLocaleString('en-US')
 
-export function RoundsCard({ rounds, loading, admin, team, actions }: { rounds: RoundVM[]; loading: boolean; admin: boolean; team: boolean; actions: RoundActions }) {
+export function RoundsCard({ rounds, loading, admin, team, actions, error, onRetry }: { rounds: RoundVM[]; loading: boolean; admin: boolean; team: boolean; actions: RoundActions; error?: boolean; onRetry?: () => void }) {
   const spot = rounds[0]
   const rest = rounds.slice(1)
   const [all, setAll] = useState(false)
   const shown = all ? rest : rest.slice(0, 3)
   const formsTotal = rounds.reduce((s, r) => s + r.forms, 0)
   const subTotal = rounds.reduce((s, r) => s + r.submitted, 0)
-  const sub = loading ? 'Loading rounds' : rounds.length === 0 ? 'No rounds running' : `${rounds.length} round${rounds.length === 1 ? '' : 's'} running, most urgent first${team ? ' · your teams only' : ''}`
+  const sub = loading ? 'Loading rounds' : error ? 'Rounds could not load' : rounds.length === 0 ? 'No rounds running' : `${rounds.length} round${rounds.length === 1 ? '' : 's'} running, most urgent first${team ? ' · your teams only' : ''}`
 
   return (
     <section id="co-rounds" aria-labelledby="co-rounds-title" aria-busy={loading} className="flex min-w-0 scroll-mt-20 flex-col overflow-hidden rounded-panel border border-primary-light bg-card shadow-focus-card">
@@ -49,7 +49,7 @@ export function RoundsCard({ rounds, loading, admin, team, actions }: { rounds: 
             <span className="text-xs-plus leading-4.5 text-light-text">{sub}</span>
           </span>
         </div>
-        {!loading && rounds.length > 0 && (
+        {!loading && !error && rounds.length > 0 && (
           <div className="flex items-center gap-5">
             <span className="flex flex-col items-end">
               <span className="text-sm leading-4.5 font-bold text-heading">{fmt(subTotal)} / {fmt(formsTotal)}</span>
@@ -64,6 +64,12 @@ export function RoundsCard({ rounds, loading, admin, team, actions }: { rounds: 
       <div className="flex flex-col gap-4 px-6 pt-4 pb-6">
         {loading ? (
           [0, 1, 2].map((i) => <Skel key={i} className={`${i ? 'h-21' : 'h-44'} rounded-lg`} />)
+        ) : error ? (
+          <div role="alert">
+            <Empty icon="alert" tone="grey" title="Could Not Load Active Rounds" text="Something went wrong. Please try again. The rest of the dashboard is still up to date.">
+              <button type="button" onClick={onRetry} className="mt-2 h-9 cursor-pointer rounded-lg border border-primary bg-white px-4 text-sm font-medium text-primary hover:bg-body-bg">Try Again</button>
+            </Empty>
+          </div>
         ) : !spot ? (
           <Empty icon="clip" title="No Active Rounds" text={admin ? 'Start a round to collect evaluations from your teams. Its progress shows here until it closes.' : 'No running round includes your teams right now. When one opens, its progress shows here.'}>
             {admin && (
