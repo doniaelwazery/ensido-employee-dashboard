@@ -120,11 +120,20 @@ export type Insight = { tone: 'critical' | 'good' | 'warning'; text: string; lin
 export function AiInsightsCard({ insights, source, jump }: { insights: Insight[]; source: string; jump: (id: string) => void }) {
   const dot = { critical: 'var(--color-danger)', good: 'var(--color-success)', warning: 'var(--color-warning)' }
   return (
-    <section aria-labelledby="co-ai" className="@container relative flex flex-col gap-4 overflow-hidden rounded-xl border-2 border-ai-accent/40 bg-card p-6">
-      <span aria-hidden="true" className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full opacity-25 blur-3xl" style={{ background: 'radial-gradient(closest-side, #ff2c2c, #8f00ff, transparent)' }} />
+    <section
+      aria-labelledby="co-ai"
+      className="@container relative flex flex-col gap-4 overflow-hidden rounded-xl border border-transparent p-6"
+      style={{
+        /* calm AI identity: soft lavender→indigo hairline + faint wash (no red, which reads as danger) */
+        background:
+          'linear-gradient(160deg, color-mix(in srgb, var(--color-purple-bg) 70%, var(--color-card)), var(--color-card) 45%) padding-box, ' +
+          'linear-gradient(135deg, color-mix(in srgb, var(--color-purple) 45%, transparent), color-mix(in srgb, var(--color-primary) 30%, transparent) 55%, var(--color-grey-200)) border-box',
+      }}
+    >
+      <span aria-hidden="true" className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full opacity-20 blur-3xl" style={{ background: 'radial-gradient(closest-side, var(--color-purple), var(--color-primary), transparent)' }} />
       <div className="relative flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary shadow-ai-glow">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-purple-stroke bg-purple-bg">
             <img src="/assets/sparkle.svg" alt="" width={20} height={20} />
           </span>
           <span className="flex min-w-0 flex-col">
