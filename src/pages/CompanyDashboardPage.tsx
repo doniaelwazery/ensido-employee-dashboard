@@ -419,8 +419,8 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
           { id: 'evaluators', col: 'float', node: !loading && rounds.length > 0 && <OverdueCard people={team ? d.overdue.filter((o) => o.manager === 'Ahmed Fathy') : d.overdue} rounds={rounds} team={team} reminded={evReminded} onRemind={remindEv} onRemindAll={remindAll} /> },
           { id: 'results', col: 'main', node: <ResultsCard rounds={d.completed} team={team} loading={loading} error={resErr} onRetry={() => setFixed((f) => ({ ...f, res: true }))} /> },
           { id: 'joiners', col: 'float', node: <JoinersCard joiners={team ? d.teamJoiners : d.joiners} loading={loading} admin={admin} you={user} /> },
-          { id: 'trends', col: 'float', node: !loading && scenario !== 'new' && <TrendsCard rows={d.completed.length >= 2 ? (team ? TRENDS.team : TRENDS.company) : []} team={team} /> },
           { id: 'quick', col: 'side', node: !loading && scenario !== 'new' && <QuickActionsCard actions={quick} /> },
+          { id: 'trends', col: 'side', node: !loading && scenario !== 'new' && <TrendsCard rows={d.completed.length >= 2 ? (team ? TRENDS.team : TRENDS.company) : []} team={team} /> },
         ] : [
           { id: 'rounds', col: 'main', node: <RoundsCard rounds={rounds} loading={loading} admin={admin} team={team} actions={actions} /> },
           { id: 'attention', col: 'side', node: <AttentionCard items={items} loading={loading} /> },

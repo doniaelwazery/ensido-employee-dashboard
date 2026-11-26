@@ -134,7 +134,16 @@ export function AiInsightsCard({ insights, source, jump }: { insights: Insight[]
       <div className="relative flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-purple-stroke bg-purple-bg">
-            <img src="/assets/sparkle.svg" alt="" width={20} height={20} />
+            {/* same 4-point star as the ensidoMate sidebar button (Figma Sidebar → Button → Vector); white there, brand gradient on this light tile */}
+            <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+              <defs>
+                <linearGradient id="co-ai-star" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor="var(--color-purple)" />
+                  <stop offset="1" stopColor="var(--color-primary)" />
+                </linearGradient>
+              </defs>
+              <path d="M10 0L12.12 7.88L20 10L12.12 12.12L10 20L7.88 12.12L0 10L7.88 7.88L10 0Z" fill="url(#co-ai-star)" />
+            </svg>
           </span>
           <span className="flex min-w-0 flex-col">
             <h3 id="co-ai" className="flex items-center gap-2 text-base leading-6 font-semibold text-heading">
