@@ -139,7 +139,7 @@ Employees never see the tabs.
 |---|---|---|
 | Trial banner (dismissible) | when on trial | — |
 | Company header: name, status line, 4 tiles, key numbers band | whole company | "Your Teams", team numbers |
-| Active Evaluation Rounds: spotlight + list, View All Rounds | Remind, ⋯ Edit Deadline / End / Cancel, Extend Deadline, End and Publish | Remind only; rounds without their teams are hidden |
+| Active Evaluation Rounds: spotlight + list, View All Rounds | Remind (End Round when all forms are in); ⋯ menu is the same on every running round: Edit Round / End Round / Cancel Round | Remind only; rounds without their teams are hidden |
 | Needs Your Attention (rules in `items`) | overdue, closing <3 days & <80%, all submitted, low scores, seats ≥90%, setup, no people, idle | overdue, closing soon, low scores |
 | ensidoMate Insights (Beta) | 1–3 insights, each links to a section | team insights |
 | Latest Round Results: picker, published notice, bands / by department, Top Performers + Need Attention | company | team |

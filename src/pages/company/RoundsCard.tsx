@@ -142,7 +142,7 @@ function Spotlight({ r, admin, team, actions }: { r: RoundVM; admin: boolean; te
         <p className="relative flex items-start gap-2 rounded-lg border border-danger-stroke bg-white px-3 py-2.5 text-xs-plus leading-4.5 text-danger-dark">
           <Icon name="alert" size={16} color="var(--color-danger)" className="mt-px" />
           {admin
-            ? 'The deadline has passed and the round is still open. Evaluators can keep submitting until you extend the deadline or end the round.'
+            ? 'The deadline has passed and the round is still open. Evaluators can keep submitting until you edit the deadline or end the round.'
             : 'The deadline has passed and the round is still open. Your admin decides when it ends.'}
         </p>
       )}
@@ -150,15 +150,12 @@ function Spotlight({ r, admin, team, actions }: { r: RoundVM; admin: boolean; te
       <div className="relative flex flex-wrap items-center gap-3">
         {done ? (
           admin ? (
-            <button type="button" onClick={() => actions.end(r)} className="flex h-10 cursor-pointer items-center gap-2 rounded-tile bg-primary px-4 text-sm font-semibold text-white shadow-primary-lg transition-colors hover:bg-primary-dark">End Round and Publish</button>
+            <button type="button" onClick={() => actions.end(r)} className="flex h-10 cursor-pointer items-center gap-2 rounded-tile bg-primary px-4 text-sm font-semibold text-white shadow-primary-lg transition-colors hover:bg-primary-dark">End Round</button>
           ) : null
         ) : (
           <button type="button" onClick={() => actions.remind(r)} className="flex h-10 cursor-pointer items-center gap-2 rounded-tile bg-primary px-4 text-sm font-semibold text-white shadow-primary-lg transition-colors hover:bg-primary-dark">
             <Icon name="bell" /> Remind Evaluators
           </button>
-        )}
-        {overdue && admin && !done && (
-          <button type="button" onClick={() => actions.edit(r)} className="flex h-10 cursor-pointer items-center rounded-tile border border-primary bg-white px-4 text-sm font-medium text-primary transition-colors hover:bg-body-bg">Extend Deadline</button>
         )}
         <button type="button" className="flex h-10 cursor-pointer items-center gap-1.5 rounded-tile px-2 text-sm font-medium text-primary hover:text-primary-dark">View Details <Icon name="arrow" size={14} /></button>
         <span className="ml-auto text-xs leading-4 text-light-text">{done ? 'Ready to close' : r.reminded ? `Last reminded ${r.reminded}` : 'No reminders sent yet'}</span>
@@ -223,8 +220,9 @@ function RoundMenu({ r, actions }: { r: RoundVM; actions: RoundActions }) {
       </button>
       {open && (
         <div role="menu" className="menu-in absolute top-[calc(100%+6px)] right-0 z-20 flex w-48 flex-col overflow-hidden rounded-lg border border-grey-200 bg-card py-1 shadow-tooltip">
-          <button type="button" role="menuitem" onClick={pick(actions.edit)} className={`${item} text-body-text`}>Edit Deadline</button>
-          <button type="button" role="menuitem" onClick={pick(actions.end)} className={`${item} text-body-text`}>End Round Now</button>
+          {/* every running round has the same three actions, whatever its state */}
+          <button type="button" role="menuitem" onClick={pick(actions.edit)} className={`${item} text-body-text`}>Edit Round</button>
+          <button type="button" role="menuitem" onClick={pick(actions.end)} className={`${item} text-body-text`}>End Round</button>
           <span className="my-1 h-px bg-grey-200" />
           <button type="button" role="menuitem" onClick={pick(actions.cancel)} className={`${item} text-danger`}>Cancel Round</button>
         </div>

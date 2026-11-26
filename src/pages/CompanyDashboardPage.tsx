@@ -451,7 +451,7 @@ function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }
         </Dialog>
       )}
       {modal?.type === 'edit' && (
-        <Dialog icon="clip" title="Edit Deadline" confirm="Save Deadline" disabled={!dateOk} onClose={closeModal} onConfirm={() => { setDeadlines((m) => ({ ...m, [modal.r.id]: dateOff })); setModal(null); showToast(`Deadline updated to ${dayStr(dateOff)}.`) }}>
+        <Dialog icon="clip" title={`Edit ${modal.r.title}`} confirm="Save Changes" disabled={!dateOk} onClose={closeModal} onConfirm={() => { setDeadlines((m) => ({ ...m, [modal.r.id]: dateOff })); setModal(null); showToast(`Deadline updated to ${dayStr(dateOff)}.`) }}>
           The current deadline for {modal.r.title} is {modal.r.deadline}. Evaluators with pending forms are notified of the new date.
           <label className="mt-3 flex flex-col gap-1.5">
             <span className="text-xs leading-4 font-medium text-heading">New deadline</span>
@@ -631,7 +631,7 @@ function CompanyControls({ role, rolePicker, scenario, setScenario, loading, rel
               <input type="checkbox" checked={trial} onChange={(e) => setTrial(e.target.checked)} className="size-4 accent-primary" /> Trial ending banner
             </label>
           )}
-          <span role="status" className="text-xs leading-4 text-primary-light">{loading ? 'Loading data…' : 'Try Remind, the ⋯ menu (Edit Deadline, End, Cancel), the results round picker and chart toggle.'}</span>
+          <span role="status" className="text-xs leading-4 text-primary-light">{loading ? 'Loading data…' : 'Try Remind, the ⋯ menu (Edit, End, Cancel), the results round picker and chart toggle.'}</span>
         </div>
       )}
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex h-10 cursor-pointer items-center gap-2 rounded-full bg-secondary px-4 text-sm font-medium text-white shadow-tooltip hover:bg-primary-dark">
