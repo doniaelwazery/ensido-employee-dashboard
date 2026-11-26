@@ -166,8 +166,8 @@ function capacity(n: HTMLElement): number {
   const max = parseFloat(getComputedStyle(chart).maxHeight)
   return Number.isFinite(max) ? Math.max(0, max - chart.getBoundingClientRect().height) : 160
 }
-/** small cards that always close their column, under the elastic chart */
-const TAIL = ['quick']
+/** small cards that always close their column, under the elastic chart (Quick Actions now sits ABOVE Trends, so none) */
+const TAIL: string[] = []
 const ORD = ['order-1', 'order-2', 'order-3', 'order-4', 'order-5', 'order-6', 'order-7', 'order-8', 'order-9', 'order-10', 'order-11', 'order-12']
 function Columns({ cards, balanceKey }: { cards: ColCard[]; balanceKey: string }) {
   const live = cards.map((c, i) => ({ ...c, order: i })).filter((c) => c.node)
